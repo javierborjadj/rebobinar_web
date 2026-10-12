@@ -7,31 +7,31 @@
   <link rel="stylesheet" href="css/netflix.css" />
 </head>
 <body>
-  <!-- Barra de Navegación Superior Estilo Netflix -->
+  <!-- Barra de Navegación Superior -->
   <header class="navbar" id="navbar">
     <div class="nav-left">
       <div class="logo" onclick="App.navigate('home')">REBOBINAR</div>
       <nav class="nav-links">
         <a href="#" class="nav-item active" data-tab="home" onclick="App.navigate('home')">Inicio</a>
-        <a href="#" class="nav-item" data-tab="movies" onclick="App.navigate('movies')">Películas (6 Meses)</a>
-        <a href="#" class="nav-item" data-tab="tv" onclick="App.navigate('tv')">Series (6 Meses)</a>
+        <a href="#" class="nav-item" data-tab="movies" onclick="App.navigate('movies')">Películas</a>
+        <a href="#" class="nav-item" data-tab="tv" onclick="App.navigate('tv')">Series</a>
+        <a href="#" class="nav-item" data-tab="genres" onclick="App.navigate('genres')">🎭 Géneros</a>
         <a href="#" class="nav-item" data-tab="oscars" onclick="App.navigate('oscars')">🏆 Premios Óscar</a>
-        <a href="#" class="nav-item" data-tab="top100" onclick="App.navigate('top100')">⭐ Top 100 IMDb</a>
+        <a href="#" class="nav-item" data-tab="top100" onclick="App.navigate('top100')">⭐ Top Películas</a>
         <a href="#" class="nav-item" data-tab="kids" onclick="App.navigate('kids')">🎈 Infantiles</a>
         <a href="#" class="nav-item" data-tab="mylist" onclick="App.navigate('mylist')">Mi Lista</a>
       </nav>
     </div>
     <div class="nav-right">
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Títulos, personas, géneros..." oninput="App.onSearch(this.value)" />
+        <input type="text" id="searchInput" placeholder="Títulos, actores, directores..." oninput="App.onSearch(this.value)" />
       </div>
-      <button class="btn-platforms" onclick="App.openSettings()" title="Configurar API y Plataformas">⚙️ Plataformas / API</button>
+      <button class="btn-platforms" onclick="App.openSettings('apis')" title="Abrir Configuración">⚙️ Configuración</button>
     </div>
   </header>
 
   <!-- Contenedor Principal -->
   <main id="mainContent">
-    <!-- Hero Banner Estilo Netflix -->
     <section class="hero" id="heroBanner">
       <div class="hero-backdrop" id="heroBackdrop"></div>
       <div class="hero-vignette"></div>
@@ -45,40 +45,61 @@
       </div>
     </section>
 
-    <!-- Contenedor Dinámico de Filas o Grillas -->
     <div class="catalog-container" id="catalogContainer"></div>
   </main>
 
-  <!-- Modal de Detalles y Reproductor de Tráiler -->
+  <!-- Modal de Detalles y Tráiler -->
   <div class="modal-overlay hidden" id="detailModal" onclick="if(event.target===this) App.closeModal()">
     <div class="modal-card" id="detailContent"></div>
   </div>
 
-  <!-- Modal de Configuración (API Key + Mis Plataformas) -->
+  <!-- Modal de Configuración con 2 Apartados: APIs y Plataformas -->
   <div class="modal-overlay hidden" id="settingsModal" onclick="if(event.target===this) App.closeSettings()">
     <div class="modal-card settings-card">
-      <h2>Configuración de Rebobinar Web</h2>
-      <p class="settings-sub">Pegá tu Clave de API de TMDB (v3 auth de 32 caracteres) o Token de lectura, y elegí tus plataformas contratadas. Los pósters que NO estén en tus plataformas se verán en gris.</p>
-      
-      <label class="field-label">Clave de API de TMDB (32 caracteres) o Token:</label>
-      <input type="text" id="apiKeyInput" class="web-input" placeholder="Pegá acá con Ctrl+V tu clave de TMDB..." />
+      <div class="settings-header">
+        <h2>⚙️ Configuración</h2>
+        <div class="pill-tabs">
+          <button class="pill-tab active" id="tabBtnApis" onclick="App.switchSettingsTab('apis')">🔑 Apartado APIs</button>
+          <button class="pill-tab" id="tabBtnPlatforms" onclick="App.switchSettingsTab('platforms')">📺 Plataformas (<span id="platCountBadge">0</span>)</button>
+        </div>
+      </div>
 
-      <label class="field-label">País del catálogo de Streaming:</label>
-      <select id="regionSelect" class="web-input">
-        <option value="AR">Argentina (AR)</option>
-        <option value="ES">España (ES)</option>
-        <option value="MX">México (MX)</option>
-        <option value="CL">Chile (CL)</option>
-        <option value="CO">Colombia (CO)</option>
-        <option value="UY">Uruguay (UY)</option>
-        <option value="US">Estados Unidos (US)</option>
-      </select>
+      <!-- Apartado 1: APIs -->
+      <div id="settingsTabApis" class="settings-tab-body">
+        <p class="settings-sub">Configurá tus claves para obtener el catálogo actualizado, pósters, tráilers doblados y puntajes.</p>
+        
+        <label class="field-label">1. Clave de API de TMDB (32 caracteres v3 auth o Token):</label>
+        <input type="text" id="apiKeyInput" class="web-input" placeholder="Pegá acá con Ctrl+V tu clave de TMDB..." />
 
-      <label class="field-label">Mis Plataformas (Destildá las que no uses para poner en gris lo que no esté disponible):</label>
-      <div class="platforms-grid" id="platformsSelector"></div>
+        <label class="field-label">2. Clave de API de OMDb (Opcional — para ratings de IMDb / Rotten Tomatoes):</label>
+        <input type="text" id="omdbKeyInput" class="web-input" placeholder="Pegá acá tu clave de OMDb (opcional)..." />
+
+        <label class="field-label">3. País del catálogo de Streaming:</label>
+        <select id="regionSelect" class="web-input" onchange="App.loadAllRegionProviders(this.value)">
+          <option value="AR">Argentina (AR)</option>
+          <option value="ES">España (ES)</option>
+          <option value="MX">México (MX)</option>
+          <option value="CL">Chile (CL)</option>
+          <option value="CO">Colombia (CO)</option>
+          <option value="UY">Uruguay (UY)</option>
+          <option value="PE">Perú (PE)</option>
+          <option value="US">Estados Unidos (US)</option>
+        </select>
+      </div>
+
+      <!-- Apartado 2: Todas las Plataformas de TMDB -->
+      <div id="settingsTabPlatforms" class="settings-tab-body hidden">
+        <p class="settings-sub">Elegí todas las plataformas que tenés disponibles. Los pósters de películas o series que NO estén en tus plataformas seleccionadas se verán en gris.</p>
+        <div class="plat-toolbar">
+          <input type="text" id="platSearchInput" class="web-input" placeholder="Buscar plataforma (ej: Netflix, Flow, MUBI, Pluto...)" oninput="App.filterPlatformsList(this.value)" style="flex:1;" />
+          <button class="btn-secondary" onclick="App.toggleAllPlatforms(true)">Marcar todas</button>
+          <button class="btn-secondary" onclick="App.toggleAllPlatforms(false)">Ninguna</button>
+        </div>
+        <div class="platforms-grid" id="platformsSelector"></div>
+      </div>
 
       <div class="settings-actions">
-        <button class="btn-primary" onclick="App.saveSettings()">Guardar y Actualizar</button>
+        <button class="btn-primary" onclick="App.saveSettings()">Guardar Configuración</button>
         <button class="btn-secondary" onclick="App.closeSettings()">Cerrar</button>
       </div>
     </div>

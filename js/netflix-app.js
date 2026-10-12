@@ -1,35 +1,102 @@
-﻿const PLATFORMS_LIST = [
-  { id: 8, name: 'Netflix' },
-  { id: 119, name: 'Amazon Prime Video' },
-  { id: 337, name: 'Disney+' },
-  { id: 1899, name: 'Max' },
-  { id: 531, name: 'Paramount+' },
-  { id: 350, name: 'Apple TV+' },
-  { id: 339, name: 'MovistarTV' },
-  { id: 619, name: 'Star+ / Mercado Play' },
-  { id: 300, name: 'Pluto TV (Gratis)' },
-  { id: 457, name: 'VIX (Gratis)' },
-  { id: 283, name: 'Crunchyroll' },
-  { id: 11, name: 'MUBI' }
+﻿// Lista base por defecto si aún no cargó la API de TMDB
+const DEFAULT_PLATFORMS = [
+  { provider_id: 8, provider_name: 'Netflix', logo_path: '/pbpMk2JmcoNnQwx5JGpXngfoWtp.jpg' },
+  { provider_id: 119, provider_name: 'Amazon Prime Video', logo_path: '/dQeAar5H991VYporEjUspolDarG.jpg' },
+  { provider_id: 337, provider_name: 'Disney Plus', logo_path: '/97yvRBw1GzX7fXprcF80er19ot.jpg' },
+  { provider_id: 1899, provider_name: 'Max', logo_path: '/fksCUZ9QDWZMUwL2LgMtLckROUN.jpg' },
+  { provider_id: 531, provider_name: 'Paramount Plus', logo_path: '/h5DcR0J2EESLitnhR8xLG1QymTE.jpg' },
+  { provider_id: 350, provider_name: 'Apple TV Plus', logo_path: '/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg' },
+  { provider_id: 339, provider_name: 'MovistarTV', logo_path: '/f6TRLB3H4jDpFEZ0z2KWSSvu1SB.jpg' },
+  { provider_id: 619, provider_name: 'Mercado Play', logo_path: '/adO1535eaO2c1793c1k5c7U31F4.jpg' },
+  { provider_id: 300, provider_name: 'Pluto TV', logo_path: '/dB8G41Q6tSL5NBisrIeqByfepBc.jpg' },
+  { provider_id: 457, provider_name: 'VIX', logo_path: '/jwRPknT20dfU1GeVqbcDXFyvtdG.jpg' },
+  { provider_id: 283, provider_name: 'Crunchyroll', logo_path: '/mXeC4TrcgdU6ltE9bCBCEORwSQR.jpg' },
+  { provider_id: 11, provider_name: 'MUBI', logo_path: '/bVR4Z1LCHY7gidXAJF5pMa4QrDS.jpg' },
+  { provider_id: 167, provider_name: 'Claro video', logo_path: '/21M5CpiOYGOhHj2sVPXqwt61XqG.jpg' },
+  { provider_id: 546, provider_name: 'Flow', logo_path: '/l9BR81Z4K4636p4N0R02Y96S3d.jpg' }
 ];
 
-// IDs de Ganadoras y Nominadas históricas al Óscar a Mejor Película en TMDB
-const OSCAR_BEST_PICTURE_IDS = [
-  872585, 545611, 776503, 581734, 496243, 490132, 399055, 376867, 314365, 194662,
-  76203, 68734, 74643, 45269, 12162, 12405, 6977, 1422, 1640, 70, 122, 1574, 453,
-  98, 14, 1934, 597, 409, 197, 13, 424, 33, 274, 581, 403, 380, 746, 279, 11050,
-  783, 9443, 12102, 11778, 703, 1366, 510, 240, 238, 1051, 11202, 3116
+// Historial completo de Premios Óscar a Mejor Película por Año
+const OSCAR_WINNERS_BY_YEAR = [
+  { year: 2025, id: 1064213, title: 'Anora' },
+  { year: 2024, id: 872585, title: 'Oppenheimer' },
+  { year: 2023, id: 545611, title: 'Todo en todas partes al mismo tiempo' },
+  { year: 2022, id: 776503, title: 'CODA' },
+  { year: 2021, id: 581734, title: 'Nomadland' },
+  { year: 2020, id: 496243, title: 'Parásitos' },
+  { year: 2019, id: 490132, title: 'Green Book' },
+  { year: 2018, id: 399055, title: 'La forma del agua' },
+  { year: 2017, id: 376867, title: 'Luz de luna (Moonlight)' },
+  { year: 2016, id: 314365, title: 'En primera plana (Spotlight)' },
+  { year: 2015, id: 194662, title: 'Birdman' },
+  { year: 2014, id: 76203, title: '12 años de esclavitud' },
+  { year: 2013, id: 68734, title: 'Argo' },
+  { year: 2012, id: 74643, title: 'El artista' },
+  { year: 2011, id: 45269, title: 'El discurso del rey' },
+  { year: 2010, id: 12162, title: 'Vivir al límite (The Hurt Locker)' },
+  { year: 2009, id: 12405, title: '¿Quién quiere ser millonario?' },
+  { year: 2008, id: 6977, title: 'Sin lugar para los débiles' },
+  { year: 2007, id: 1422, title: 'Los infiltrados' },
+  { year: 2006, id: 1640, title: 'Vidas cruzadas (Crash)' },
+  { year: 2005, id: 70, title: 'Million Dollar Baby' },
+  { year: 2004, id: 122, title: 'El Señor de los Anillos: El retorno del Rey' },
+  { year: 2003, id: 1574, title: 'Chicago' },
+  { year: 2002, id: 453, title: 'Una mente brillante' },
+  { year: 2001, id: 98, title: 'Gladiador' },
+  { year: 2000, id: 14, title: 'Belleza americana' },
+  { year: 1999, id: 1934, title: 'Shakespeare apasionado' },
+  { year: 1998, id: 597, title: 'Titanic' },
+  { year: 1997, id: 409, title: 'El paciente inglés' },
+  { year: 1996, id: 197, title: 'Corazón valiente' },
+  { year: 1995, id: 13, title: 'Forrest Gump' },
+  { year: 1994, id: 424, title: 'La lista de Schindler' },
+  { year: 1993, id: 33, title: 'Los imperdonables' },
+  { year: 1992, id: 274, title: 'El silencio de los inocentes' },
+  { year: 1991, id: 581, title: 'Danza con lobos' },
+  { year: 1990, id: 403, title: 'Conduciendo a Miss Daisy' },
+  { year: 1989, id: 380, title: 'Rain Man' },
+  { year: 1988, id: 746, title: 'El último emperador' },
+  { year: 1987, id: 792, title: 'Pelotón (Platoon)' },
+  { year: 1986, id: 606, title: 'África mía' },
+  { year: 1985, id: 279, title: 'Amadeus' },
+  { year: 1984, id: 11050, title: 'La fuerza del cariño' },
+  { year: 1983, id: 783, title: 'Gandhi' },
+  { year: 1982, id: 9443, title: 'Carrozas de fuego' },
+  { year: 1981, id: 16619, title: 'Gente como uno' },
+  { year: 1980, id: 12102, title: 'Kramer vs. Kramer' },
+  { year: 1979, id: 11778, title: 'El francotirador' },
+  { year: 1978, id: 703, title: 'Dos extraños amantes (Annie Hall)' },
+  { year: 1977, id: 1366, title: 'Rocky' },
+  { year: 1976, id: 510, title: 'Atrapado sin salida' },
+  { year: 1975, id: 240, title: 'El Padrino Parte II' },
+  { year: 1974, id: 9277, title: 'El golpe' },
+  { year: 1973, id: 238, title: 'El Padrino' },
+  { year: 1972, id: 1051, title: 'Contacto en Francia' },
+  { year: 1971, id: 11202, title: 'Patton' },
+  { year: 1970, id: 3116, title: 'Perdidos en la noche' },
+  { year: 1966, id: 15121, title: 'La novicia rebelde' },
+  { year: 1963, id: 947, title: 'Lawrence de Arabia' },
+  { year: 1961, id: 284, title: 'Piso de soltero' },
+  { year: 1960, id: 665, title: 'Ben-Hur' },
+  { year: 1958, id: 826, title: 'El puente sobre el río Kwai' },
+  { year: 1955, id: 654, title: 'Nido de ratas' },
+  { year: 1951, id: 705, title: 'La malvada (All About Eve)' },
+  { year: 1944, id: 289, title: 'Casablanca' },
+  { year: 1940, id: 770, title: 'Lo que el viento se llevó' },
+  { year: 1929, id: 631, title: 'Alas (Wings)' }
 ];
 
 const App = {
   apiKey: '',
+  omdbKey: '',
   region: 'AR',
-  myPlatforms: [8, 119, 337, 1899, 531, 350, 339, 619, 300],
+  allRegionPlatforms: [...DEFAULT_PLATFORMS],
+  myPlatforms: [8, 119, 337, 1899, 531, 350, 339, 619, 300, 457, 283, 11, 167, 546],
   myList: [],
   providerCache: {},
   currentView: 'home',
 
-  init() {
+  async init() {
     this.loadSavedConfig();
     window.addEventListener('scroll', () => {
       const nav = document.getElementById('navbar');
@@ -38,20 +105,20 @@ const App = {
     });
 
     if (!this.apiKey) {
-      this.openSettings();
+      this.openSettings('apis');
     } else {
+      await this.loadAllRegionProviders(this.region);
       this.navigate('home');
     }
   },
 
   loadSavedConfig() {
-    // Intentar leer clave guardada de la versión anterior o la nueva
     const savedKey = localStorage.getItem('rebobinar_tmdb_key') ||
                      localStorage.getItem('tmdb_api_key') ||
                      localStorage.getItem('tmdbKey') || '';
     this.apiKey = savedKey.trim();
+    this.omdbKey = (localStorage.getItem('rebobinar_omdb_key') || '').trim();
 
-    // Buscar automáticamente si estaba guardada en algún JSON de la app de TV anterior
     if (!this.apiKey) {
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
@@ -73,14 +140,43 @@ const App = {
     if (savedList) {
       try { this.myList = JSON.parse(savedList); } catch (e) {}
     }
+    this.updatePlatCountBadge();
   },
 
-  getSixMonthsWindow() {
+  // Utilidades de Fechas
+  formatDate(d) {
+    return d.toISOString().split('T')[0];
+  },
+
+  getPresetDates(filterKey) {
     const today = new Date();
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(today.getMonth() - 6);
-    const fmt = (d) => d.toISOString().split('T')[0];
-    return { gte: fmt(sixMonthsAgo), lte: fmt(today) };
+    const from = new Date();
+    const to = new Date();
+
+    if (filterKey === 'popular') {
+      // SOLO en Populares: 6 meses hacia atrás hasta hoy
+      from.setMonth(today.getMonth() - 6);
+      return { gte: this.formatDate(from), lte: this.formatDate(today), label: 'Precargado: últimos 6 meses hasta hoy' };
+    }
+    if (filterKey === 'theatres') {
+      // En cines ahora y próximos días
+      from.setDate(today.getDate() - 45);
+      to.setMonth(today.getMonth() + 2);
+      return { gte: this.formatDate(from), lte: this.formatDate(to), label: 'En cartelera actual y próximos estrenos' };
+    }
+    if (filterKey === 'upcoming') {
+      // Próximamente: desde hoy hacia adelante (6 meses)
+      to.setMonth(today.getMonth() + 6);
+      return { gte: this.formatDate(today), lte: this.formatDate(to), label: 'Estrenos desde hoy hacia adelante' };
+    }
+    if (['streaming', 'netflix', 'prime', 'disney', 'new_series'].includes(filterKey)) {
+      // Nuevas en streaming: últimas 4 semanas en adelante
+      from.setDate(today.getDate() - 28);
+      to.setMonth(today.getMonth() + 2);
+      return { gte: this.formatDate(from), lte: this.formatDate(to), label: 'Últimas 4 semanas en adelante' };
+    }
+    // Resto de filtros (Mejor valoradas, Joyas, Gratis, Alquiler): sin límite forzado o editable
+    return { gte: '', lte: '', label: 'Histórico completo (podés filtrar por fecha si querés)' };
   },
 
   async fetchTMDB(endpoint, params = {}) {
@@ -108,18 +204,84 @@ const App = {
     }
   },
 
+  // Cargar TODAS las plataformas de TMDB disponibles para el país elegido
+  async loadAllRegionProviders(regionCode = this.region) {
+    if (!this.apiKey) {
+      this.renderPlatformsCheckboxes(DEFAULT_PLATFORMS);
+      return;
+    }
+    const [movProv, tvProv] = await Promise.all([
+      this.fetchTMDB('/watch/providers/movie', { watch_region: regionCode }),
+      this.fetchTMDB('/watch/providers/tv', { watch_region: regionCode })
+    ]);
+
+    const combined = [...(movProv?.results || []), ...(tvProv?.results || []), ...DEFAULT_PLATFORMS];
+    const map = new Map();
+    for (const p of combined) {
+      if (!map.has(p.provider_id)) {
+        map.set(p.provider_id, p);
+      }
+    }
+    this.allRegionPlatforms = Array.from(map.values()).sort((a, b) =>
+      (a.display_priority ?? 999) - (b.display_priority ?? 999)
+    );
+    this.renderPlatformsCheckboxes(this.allRegionPlatforms);
+  },
+
+  renderPlatformsCheckboxes(list) {
+    const grid = document.getElementById('platformsSelector');
+    if (!grid) return;
+    grid.innerHTML = list.map(p => {
+      const checked = this.myPlatforms.includes(p.provider_id) ? 'checked' : '';
+      const logo = p.logo_path ? `https://image.tmdb.org/t/p/w92${p.logo_path}` : '';
+      return `
+        <label class="platform-check" data-name="${p.provider_name.toLowerCase()}">
+          <input type="checkbox" value="${p.provider_id}" ${checked} onchange="App.onPlatformCheckChange()" />
+          ${logo ? `<img src="${logo}" alt="${p.provider_name}" loading="lazy" />` : ''}
+          <span>${p.provider_name}</span>
+        </label>
+      `;
+    }).join('');
+    this.updatePlatCountBadge();
+  },
+
+  onPlatformCheckChange() {
+    const checks = Array.from(document.querySelectorAll('#platformsSelector input:checked')).map(c => Number(c.value));
+    const badge = document.getElementById('platCountBadge');
+    if (badge) badge.textContent = checks.length;
+  },
+
+  updatePlatCountBadge() {
+    const badge = document.getElementById('platCountBadge');
+    if (badge) badge.textContent = this.myPlatforms.length;
+  },
+
+  filterPlatformsList(q) {
+    const term = q.trim().toLowerCase();
+    document.querySelectorAll('#platformsSelector .platform-check').forEach(el => {
+      const match = el.dataset.name.includes(term);
+      el.style.display = match ? 'flex' : 'none';
+    });
+  },
+
+  toggleAllPlatforms(selectAll) {
+    document.querySelectorAll('#platformsSelector input[type="checkbox"]').forEach(cb => {
+      if (cb.parentElement.style.display !== 'none') cb.checked = selectAll;
+    });
+    this.onPlatformCheckChange();
+  },
+
   async getProviders(mediaType, id) {
-    const key = `${mediaType}_${id}`;
+    const key = `${mediaType}_${id}_${this.region}`;
     if (this.providerCache[key]) return this.providerCache[key];
 
     const data = await this.fetchTMDB(`/${mediaType}/${id}/watch/providers`);
-    const countryData = data?.results?.[this.region] || data?.results?.['AR'] || data?.results?.['ES'] || {};
+    const countryData = data?.results?.[this.region] || {};
     const all = [
       ...(countryData.flatrate || []),
       ...(countryData.free || []),
       ...(countryData.ads || [])
     ];
-    // Eliminar duplicados
     const unique = [];
     const seen = new Set();
     for (const p of all) {
@@ -132,17 +294,6 @@ const App = {
     return unique;
   },
 
-  isAvailableInMyPlatforms(providers) {
-    if (!providers || providers.length === 0) return false;
-    return providers.some(p =>
-      this.myPlatforms.includes(p.provider_id) ||
-      this.myPlatforms.some(myId => {
-        const myObj = PLATFORMS_LIST.find(x => x.id === myId);
-        return myObj && p.provider_name.toLowerCase().includes(myObj.name.split(' ')[0].toLowerCase());
-      })
-    );
-  },
-
   async navigate(view) {
     this.currentView = view;
     document.querySelectorAll('.nav-item').forEach(el => {
@@ -151,22 +302,23 @@ const App = {
 
     const hero = document.getElementById('heroBanner');
     const container = document.getElementById('catalogContainer');
-    container.innerHTML = '<div style="padding:40px 0; color:#999;">Cargando contenidos...</div>';
+    container.innerHTML = '<div style="padding:40px 0; color:#999;">Cargando catálogo...</div>';
 
     if (view === 'home') {
       hero.classList.remove('hidden');
+      container.style.paddingTop = '10px';
       await this.renderHome();
     } else {
       hero.classList.add('hidden');
       container.style.paddingTop = '90px';
-      if (view === 'movies') await this.renderMovies6Months('popular');
-      if (view === 'tv') await this.renderTV6Months('popular');
-      if (view === 'oscars') await this.renderOscars();
-      if (view === 'top100') await this.renderTop100();
-      if (view === 'kids') await this.renderKids('popular');
+      if (view === 'movies') await this.renderCatalogSection('movie', 'popular');
+      if (view === 'tv') await this.renderCatalogSection('tv', 'popular');
+      if (view === 'genres') await this.renderGenresSection('movie', 28);
+      if (view === 'oscars') await this.renderOscars('all');
+      if (view === 'top100') await this.renderTop100('imdb');
+      if (view === 'kids') await this.renderCatalogSection('kids', 'popular');
       if (view === 'mylist') await this.renderMyList();
     }
-    if (view === 'home') container.style.paddingTop = '10px';
   },
 
   async updateHero(item, mediaType = 'movie') {
@@ -203,11 +355,10 @@ const App = {
   async renderHome() {
     const container = document.getElementById('catalogContainer');
     container.innerHTML = `
-      <!-- 1. Tendencias -->
       <section class="row-section">
         <div class="row-header">
           <h2 class="row-title">🔥 Tendencias</h2>
-          <div class="pill-tabs" id="tabsTrending">
+          <div class="pill-tabs">
             <button class="pill-tab active" onclick="App.loadTrendingRow('day', this)">Hoy</button>
             <button class="pill-tab" onclick="App.loadTrendingRow('week', this)">Esta semana</button>
           </div>
@@ -215,18 +366,16 @@ const App = {
         <div class="row-scroller" id="rowTrending"></div>
       </section>
 
-      <!-- 2. Últimos Tráilers (Doblados / Español) -->
       <section class="row-section">
         <div class="row-header">
-          <h2 class="row-title">🎬 Últimos Tráilers (Español / Doblados - Últimos 6 meses)</h2>
+          <h2 class="row-title">🎬 Últimos Tráilers (Español / Doblados)</h2>
         </div>
         <div class="row-scroller" id="rowTrailers"></div>
       </section>
 
-      <!-- 3. Lo más popular (Retransmisión / En televisión / En alquiler / En cines) -->
       <section class="row-section">
         <div class="row-header">
-          <h2 class="row-title">🍿 Lo más popular (Últimos 6 meses)</h2>
+          <h2 class="row-title">🍿 Lo más popular</h2>
           <div class="pill-tabs">
             <button class="pill-tab active" onclick="App.loadPopularRow('streaming', this)">Retransmisión</button>
             <button class="pill-tab" onclick="App.loadPopularRow('tv', this)">En televisión</button>
@@ -237,7 +386,6 @@ const App = {
         <div class="row-scroller" id="rowPopular"></div>
       </section>
 
-      <!-- 4. Ver Gratis (Películas / Televisión) -->
       <section class="row-section">
         <div class="row-header">
           <h2 class="row-title">🆓 Ver gratis</h2>
@@ -264,8 +412,7 @@ const App = {
     const data = await this.fetchTMDB(`/trending/all/${timeWindow}`);
     const items = data?.results || [];
     if (items.length > 0 && timeWindow === 'day') {
-      const heroPick = items[0];
-      this.updateHero(heroPick, heroPick.media_type || 'movie');
+      this.updateHero(items[0], items[0].media_type || 'movie');
     }
     this.populatePosterRow('rowTrending', items);
   },
@@ -275,7 +422,7 @@ const App = {
       btn.parentElement.querySelectorAll('.pill-tab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
     }
-    const { gte, lte } = this.getSixMonthsWindow();
+    const preset6M = this.getPresetDates('popular');
     let data = null;
 
     if (mode === 'streaming') {
@@ -283,30 +430,29 @@ const App = {
         sort_by: 'popularity.desc',
         watch_region: this.region,
         with_watch_monetization_types: 'flatrate',
-        'primary_release_date.gte': gte,
-        'primary_release_date.lte': lte
+        'primary_release_date.gte': preset6M.gte,
+        'primary_release_date.lte': preset6M.lte
       });
     } else if (mode === 'tv') {
       data = await this.fetchTMDB('/discover/tv', {
         sort_by: 'popularity.desc',
-        'first_air_date.gte': gte,
-        'first_air_date.lte': lte
+        'first_air_date.gte': preset6M.gte,
+        'first_air_date.lte': preset6M.lte
       });
       if (data?.results) data.results.forEach(r => r.media_type = 'tv');
     } else if (mode === 'rent') {
       data = await this.fetchTMDB('/discover/movie', {
         sort_by: 'popularity.desc',
         watch_region: this.region,
-        with_watch_monetization_types: 'rent',
-        'primary_release_date.gte': gte,
-        'primary_release_date.lte': lte
+        with_watch_monetization_types: 'rent'
       });
     } else if (mode === 'theatres') {
+      const thDates = this.getPresetDates('theatres');
       data = await this.fetchTMDB('/discover/movie', {
         sort_by: 'popularity.desc',
         with_release_type: '2|3',
-        'primary_release_date.gte': gte,
-        'primary_release_date.lte': lte
+        'primary_release_date.gte': thDates.gte,
+        'primary_release_date.lte': thDates.lte
       });
     }
     this.populatePosterRow('rowPopular', data?.results || []);
@@ -327,11 +473,11 @@ const App = {
   },
 
   async loadLatestTrailersRow() {
-    const { gte, lte } = this.getSixMonthsWindow();
+    const preset6M = this.getPresetDates('popular');
     const data = await this.fetchTMDB('/discover/movie', {
       sort_by: 'popularity.desc',
-      'primary_release_date.gte': gte,
-      'primary_release_date.lte': lte
+      'primary_release_date.gte': preset6M.gte,
+      'primary_release_date.lte': preset6M.lte
     });
     const row = document.getElementById('rowTrailers');
     if (!row) return;
@@ -340,7 +486,6 @@ const App = {
       const bg = m.backdrop_path
         ? `https://image.tmdb.org/t/p/w500${m.backdrop_path}`
         : `https://image.tmdb.org/t/p/w500${m.poster_path}`;
-      const date = (m.release_date || '').slice(0, 10);
       return `
         <div class="trailer-card" onclick="App.openDetail('movie', ${m.id}, true)">
           <div class="trailer-thumb" style="background-image:url('${bg}')">
@@ -348,11 +493,256 @@ const App = {
           </div>
           <div class="poster-info">
             <div class="poster-title">${m.title}</div>
-            <div class="poster-sub"><span>Estreno: ${date}</span> <span>🔊 Español / Sub</span></div>
+            <div class="poster-sub"><span>Estreno: ${(m.release_date || '').slice(0, 10)}</span> <span>🔊 Español / Sub</span></div>
           </div>
         </div>
       `;
     }).join('');
+  },
+
+  // MOTOR UNIFICADO PARA PELÍCULAS, SERIES E INFANTILES CON FILTRO DE FECHAS INTELIGENTE
+  async renderCatalogSection(sectionType, activeFilter = 'popular', customDates = null) {
+    const isTV = sectionType === 'tv' || activeFilter === 'kids_tv';
+    const isKids = sectionType === 'kids';
+    const endpoint = isTV ? '/discover/tv' : '/discover/movie';
+
+    const filters = isTV && !isKids ? [
+      { key: 'popular', label: 'Popular' },
+      { key: 'airing_today', label: 'Emitiéndose Hoy' },
+      { key: 'on_the_air', label: 'En Emisión' },
+      { key: 'new_series', label: 'Nuevas Series (4 sem.)' },
+      { key: 'netflix', label: 'Nuevas en Netflix' },
+      { key: 'prime', label: 'Nuevas en Prime' },
+      { key: 'disney', label: 'Nuevas en Disney+' },
+      { key: 'free', label: 'Ver Gratis' },
+      { key: 'top_rated', label: 'Mejor Valoradas' },
+      { key: 'gems', label: 'Joyas Ocultas' },
+      { key: 'acclaimed', label: 'Aclamadas por la Crítica' }
+    ] : [
+      { key: 'popular', label: 'Popular' },
+      { key: 'theatres', label: 'En Cines' },
+      { key: 'upcoming', label: 'Próximamente (Para adelante)' },
+      { key: 'streaming', label: 'Nuevas en Streaming (4 sem.)' },
+      { key: 'netflix', label: 'Nuevas en Netflix' },
+      { key: 'prime', label: 'Nuevas en Prime' },
+      { key: 'disney', label: 'Nuevas en Disney+' },
+      { key: 'rent', label: 'En Alquiler' },
+      { key: 'free', label: 'Ver Gratis' },
+      { key: 'top_rated', label: 'Mejor Valoradas' },
+      { key: 'gems', label: 'Joyas Ocultas' },
+      { key: 'acclaimed', label: 'Aclamadas por la Crítica' },
+      ...(isKids ? [{ key: 'kids_tv', label: '📺 Series Infantiles' }] : [])
+    ];
+
+    const preset = customDates || this.getPresetDates(activeFilter);
+    const dateFieldGte = isTV ? 'first_air_date.gte' : 'primary_release_date.gte';
+    const dateFieldLte = isTV ? 'first_air_date.lte' : 'primary_release_date.lte';
+
+    const params = {
+      watch_region: this.region,
+      sort_by: 'popularity.desc'
+    };
+
+    if (preset.gte) params[dateFieldGte] = preset.gte;
+    if (preset.lte) params[dateFieldLte] = preset.lte;
+
+    if (isKids) {
+      params.with_genres = isTV ? '10762,16' : '16,10751'; // Kids / Animación / Familia
+    }
+
+    if (activeFilter === 'theatres') params.with_release_type = '2|3';
+    if (activeFilter === 'upcoming') params.with_release_type = '2|3';
+    if (activeFilter === 'streaming') params.with_watch_monetization_types = 'flatrate';
+    if (activeFilter === 'netflix') params.with_watch_providers = '8';
+    if (activeFilter === 'prime') params.with_watch_providers = '119';
+    if (activeFilter === 'disney') params.with_watch_providers = '337';
+    if (activeFilter === 'rent') params.with_watch_monetization_types = 'rent';
+    if (activeFilter === 'free') params.with_watch_monetization_types = 'free|ads';
+    if (activeFilter === 'top_rated') { params.sort_by = 'vote_average.desc'; params['vote_count.gte'] = isKids ? 100 : 250; }
+    if (activeFilter === 'gems') { params.sort_by = 'vote_average.desc'; params['vote_count.gte'] = 25; params['vote_count.lte'] = 350; }
+    if (activeFilter === 'acclaimed') { params['vote_average.gte'] = 7.6; params['vote_count.gte'] = 150; }
+
+    let items = [];
+    if (!isKids && activeFilter === 'airing_today') {
+      const r = await this.fetchTMDB('/tv/airing_today');
+      items = r?.results || [];
+    } else if (!isKids && activeFilter === 'on_the_air') {
+      const r = await this.fetchTMDB('/tv/on_the_air');
+      items = r?.results || [];
+    } else {
+      const [p1, p2] = await Promise.all([
+        this.fetchTMDB(endpoint, { ...params, page: 1 }),
+        this.fetchTMDB(endpoint, { ...params, page: 2 })
+      ]);
+      items = [...(p1?.results || []), ...(p2?.results || [])];
+    }
+
+    items.forEach(i => i.media_type = isTV ? 'tv' : 'movie');
+
+    const titleMap = {
+      movie: '🎥 Películas',
+      tv: '📺 Series de TV',
+      kids: '🎈 Infantiles y Familia'
+    };
+
+    const container = document.getElementById('catalogContainer');
+    container.innerHTML = `
+      <h2 class="row-title">${titleMap[sectionType]}</h2>
+      <div class="filter-chips-bar">
+        ${filters.map(f => `
+          <button class="filter-chip ${f.key === activeFilter ? 'active' : ''}"
+                  onclick="App.renderCatalogSection('${sectionType}', '${f.key}')">${f.label}</button>
+        `).join('')}
+      </div>
+      <div class="date-filter-bar">
+        <span>📅 Fecha Desde:</span>
+        <input type="date" id="filterDateGte" value="${preset.gte}" />
+        <span>Hasta:</span>
+        <input type="date" id="filterDateLte" value="${preset.lte}" />
+        <button class="btn-secondary" onclick="App.applyCustomDateFilter('${sectionType}', '${activeFilter}')">Aplicar Fechas</button>
+        <span class="date-badge-info">${preset.label || ''}</span>
+      </div>
+      <div class="media-grid" id="gridCatalog"></div>
+    `;
+
+    this.populatePosterRow('gridCatalog', items);
+  },
+
+  applyCustomDateFilter(sectionType, activeFilter) {
+    const gte = document.getElementById('filterDateGte').value;
+    const lte = document.getElementById('filterDateLte').value;
+    this.renderCatalogSection(sectionType, activeFilter, {
+      gte,
+      lte,
+      label: 'Filtro de fecha personalizado aplicado'
+    });
+  },
+
+  // SECCIÓN GÉNEROS (PELÍCULAS Y SERIES)
+  async renderGenresSection(mediaType = 'movie', selectedGenreId = null) {
+    const genreData = await this.fetchTMDB(`/genre/${mediaType}/list`);
+    const genres = genreData?.genres || [];
+    const activeGenre = selectedGenreId || (genres[0]?.id ?? 28);
+
+    const [p1, p2] = await Promise.all([
+      this.fetchTMDB(`/discover/${mediaType}`, { with_genres: activeGenre, sort_by: 'popularity.desc', page: 1 }),
+      this.fetchTMDB(`/discover/${mediaType}`, { with_genres: activeGenre, sort_by: 'popularity.desc', page: 2 })
+    ]);
+    const items = [...(p1?.results || []), ...(p2?.results || [])].map(x => ({ ...x, media_type: mediaType }));
+
+    const container = document.getElementById('catalogContainer');
+    container.innerHTML = `
+      <div class="row-header">
+        <h2 class="row-title">🎭 Explorar por Géneros</h2>
+        <div class="pill-tabs">
+          <button class="pill-tab ${mediaType === 'movie' ? 'active' : ''}" onclick="App.renderGenresSection('movie')">Películas</button>
+          <button class="pill-tab ${mediaType === 'tv' ? 'active' : ''}" onclick="App.renderGenresSection('tv')">Series</button>
+        </div>
+      </div>
+      <div class="filter-chips-bar">
+        ${genres.map(g => `
+          <button class="filter-chip ${g.id === activeGenre ? 'active' : ''}"
+                  onclick="App.renderGenresSection('${mediaType}', ${g.id})">${g.name}</button>
+        `).join('')}
+      </div>
+      <div class="media-grid" id="gridGenres"></div>
+    `;
+    this.populatePosterRow('gridGenres', items);
+  },
+
+  // SECCIÓN PREMIOS ÓSCAR POR AÑO (CON AÑO A TODO COLOR)
+  async renderOscars(decadeFilter = 'all') {
+    const decades = [
+      { key: 'all', label: 'Todos los Años (1929 - 2025)' },
+      { key: '2020', label: '2020s' },
+      { key: '2010', label: '2010s' },
+      { key: '2000', label: '2000s' },
+      { key: '1990', label: '1990s' },
+      { key: '1980', label: '1980s' },
+      { key: '1970', label: '1970s' },
+      { key: 'classic', label: 'Clásicos (1929 - 1969)' }
+    ];
+
+    const filteredList = OSCAR_WINNERS_BY_YEAR.filter(item => {
+      if (decadeFilter === 'all') return true;
+      if (decadeFilter === 'classic') return item.year < 1970;
+      const dec = Number(decadeFilter);
+      return item.year >= dec && item.year < dec + 10;
+    });
+
+    const container = document.getElementById('catalogContainer');
+    container.innerHTML = `
+      <h2 class="row-title">🏆 Premios Óscar — Mejor Película por Año</h2>
+      <p style="color:#aaa; margin:6px 0 14px;">Cada ganadora muestra el año de su ceremonia en dorado a color arriba del póster.</p>
+      <div class="filter-chips-bar">
+        ${decades.map(d => `
+          <button class="filter-chip ${d.key === decadeFilter ? 'active' : ''}"
+                  onclick="App.renderOscars('${d.key}')">${d.label}</button>
+        `).join('')}
+      </div>
+      <div class="media-grid" id="gridOscars"></div>
+    `;
+
+    const results = await Promise.all(
+      filteredList.map(async (entry) => {
+        const movie = await this.fetchTMDB(`/movie/${entry.id}`);
+        if (!movie) return null;
+        return { ...movie, oscarYear: entry.year, media_type: 'movie' };
+      })
+    );
+
+    this.populatePosterRow('gridOscars', results.filter(Boolean));
+  },
+
+  // SECCIÓN TOP PELÍCULAS (TOP 100 IMDb / TOP 100 TMDB / TOP 100 ROTTEN TOMATOES)
+  async renderTop100(mode = 'imdb') {
+    const tabs = [
+      { key: 'imdb', label: '⭐ Top 100 IMDb (Clásicos más votados)' },
+      { key: 'tmdb', label: '🔥 Top 100 TMDB (Mejor puntuadas)' },
+      { key: 'tomatoes', label: '🍅 Top 100 Rotten Tomatoes (Aclamadas por la Crítica)' }
+    ];
+
+    const container = document.getElementById('catalogContainer');
+    container.innerHTML = `
+      <h2 class="row-title">⭐ Top 100 Mejores Películas</h2>
+      <div class="filter-chips-bar">
+        ${tabs.map(t => `
+          <button class="filter-chip ${t.key === mode ? 'active' : ''}"
+                  onclick="App.renderTop100('${t.key}')">${t.label}</button>
+        `).join('')}
+      </div>
+      <div class="media-grid" id="gridTop100"></div>
+    `;
+
+    let pages = [];
+    if (mode === 'imdb') {
+      // Top IMDb: Películas con altísima cantidad de votos (>12.000) ordenadas por puntaje
+      pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
+        this.fetchTMDB('/discover/movie', {
+          sort_by: 'vote_average.desc',
+          'vote_count.gte': 12000,
+          page
+        })
+      ));
+    } else if (mode === 'tmdb') {
+      pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
+        this.fetchTMDB('/movie/top_rated', { page })
+      ));
+    } else if (mode === 'tomatoes') {
+      // Aclamadas por la crítica internacional y cine de autor
+      pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
+        this.fetchTMDB('/discover/movie', {
+          sort_by: 'vote_average.desc',
+          'vote_count.gte': 2500,
+          'vote_count.lte': 15000,
+          'vote_average.gte': 7.9,
+          page
+        })
+      ));
+    }
+
+    const all100 = pages.flatMap(p => p?.results || []).slice(0, 100);
+    this.populatePosterRow('gridTop100', all100, true);
   },
 
   async populatePosterRow(containerId, items, showRank = false) {
@@ -361,7 +751,7 @@ const App = {
 
     container.innerHTML = items.map((item, idx) => {
       const mType = item.media_type || (item.first_air_date ? 'tv' : 'movie');
-      const cardId = `card_${containerId}_${mType}_${item.id}`;
+      const cardId = `card_${containerId}_${mType}_${item.id}_${idx}`;
       const poster = item.poster_path
         ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
         : 'https://via.placeholder.com/342x513/222/888?text=Sin+Poster';
@@ -372,7 +762,8 @@ const App = {
       return `
         <div class="poster-card" id="${cardId}" onclick="App.openDetail('${mType}', ${item.id}, false)">
           <div class="poster-img-wrap">
-            ${showRank ? `<div class="badge-rank">#${idx + 1}</div>` : ''}
+            ${item.oscarYear ? `<div class="badge-oscar-year">🏆 ÓSCAR ${item.oscarYear}</div>` : ''}
+            ${!item.oscarYear && showRank ? `<div class="badge-rank">#${idx + 1}</div>` : ''}
             <img class="poster-img" src="${poster}" alt="${title}" loading="lazy" />
             <div class="provider-slot"></div>
           </div>
@@ -387,211 +778,41 @@ const App = {
       `;
     }).join('');
 
-    // Verificar disponibilidad en plataformas de cada tarjeta para poner en GRIS las que no estén
-    items.forEach(async (item) => {
+    items.forEach(async (item, idx) => {
       const mType = item.media_type || (item.first_air_date ? 'tv' : 'movie');
-      const cardEl = document.getElementById(`card_${containerId}_${mType}_${item.id}`);
+      const cardEl = document.getElementById(`card_${containerId}_${mType}_${item.id}_${idx}`);
       if (!cardEl) return;
 
       const providers = await this.getProviders(mType, item.id);
-      const available = this.isAvailableInMyPlatforms(providers);
       const slot = cardEl.querySelector('.provider-slot');
 
-      if (!available) {
+      const misMatches = providers.filter(p => this.myPlatforms.includes(p.provider_id));
+
+      if (misMatches.length > 0) {
+        if (slot) {
+          slot.innerHTML = `<div class="badge-providers">
+            ${misMatches.slice(0, 3).map(p => `<img src="https://image.tmdb.org/t/p/w45${p.logo_path}" title="Disponible en tu ${p.provider_name}" />`).join('')}
+          </div>`;
+        }
+      } else if (providers.length > 0) {
         cardEl.classList.add('unavailable');
-        if (slot) slot.innerHTML = `<div class="badge-unavailable">Sin plataforma</div>`;
-      } else if (slot) {
-        const matching = providers.slice(0, 3);
-        slot.innerHTML = `<div class="badge-providers">
-          ${matching.map(p => `<img src="https://image.tmdb.org/t/p/w45${p.logo_path}" title="${p.provider_name}" />`).join('')}
-        </div>`;
+        if (slot) {
+          slot.innerHTML = `<div class="badge-unavailable" title="Disponible en: ${providers.map(p => p.provider_name).join(', ')}">No tenés: ${providers[0].provider_name}</div>`;
+        }
+      } else {
+        cardEl.classList.add('unavailable');
+        if (slot) {
+          slot.innerHTML = `<div class="badge-unavailable">En ninguna</div>`;
+        }
       }
     });
-  },
-
-  // PELÍCULAS CON FILTROS DE TMDB (6 MESES HACIA ATRÁS DESDE HOY)
-  async renderMovies6Months(activeFilter = 'popular') {
-    const { gte, lte } = this.getSixMonthsWindow();
-    const filters = [
-      { key: 'popular', label: 'Popular (6 meses)' },
-      { key: 'theatres', label: 'En Cines (In Theatres)' },
-      { key: 'streaming', label: 'Nuevas en Streaming' },
-      { key: 'netflix', label: 'Nuevas en Netflix' },
-      { key: 'prime', label: 'Nuevas en Prime Video' },
-      { key: 'disney', label: 'Nuevas en Disney+' },
-      { key: 'rent', label: 'En Alquiler (For Rent)' },
-      { key: 'free', label: 'Gratis (Free to Watch)' },
-      { key: 'top_rated', label: 'Mejor Valoradas (6 meses)' },
-      { key: 'gems', label: 'Joyas Ocultas (Hidden Gems)' },
-      { key: 'acclaimed', label: 'Aclamadas por la Crítica' }
-    ];
-
-    const params = {
-      'primary_release_date.gte': gte,
-      'primary_release_date.lte': lte,
-      watch_region: this.region,
-      sort_by: 'popularity.desc'
-    };
-
-    if (activeFilter === 'theatres') params.with_release_type = '2|3';
-    if (activeFilter === 'streaming') params.with_watch_monetization_types = 'flatrate';
-    if (activeFilter === 'netflix') params.with_watch_providers = '8';
-    if (activeFilter === 'prime') params.with_watch_providers = '119';
-    if (activeFilter === 'disney') params.with_watch_providers = '337';
-    if (activeFilter === 'rent') params.with_watch_monetization_types = 'rent';
-    if (activeFilter === 'free') params.with_watch_monetization_types = 'free|ads';
-    if (activeFilter === 'top_rated') { params.sort_by = 'vote_average.desc'; params['vote_count.gte'] = 150; }
-    if (activeFilter === 'gems') { params.sort_by = 'vote_average.desc'; params['vote_count.gte'] = 30; params['vote_count.lte'] = 400; }
-    if (activeFilter === 'acclaimed') { params['vote_average.gte'] = 7.5; params['vote_count.gte'] = 200; }
-
-    const p1 = await this.fetchTMDB('/discover/movie', { ...params, page: 1 });
-    const p2 = await this.fetchTMDB('/discover/movie', { ...params, page: 2 });
-    const items = [...(p1?.results || []), ...(p2?.results || [])];
-
-    const container = document.getElementById('catalogContainer');
-    container.innerHTML = `
-      <h2 class="row-title">🎥 Películas — Ventana Últimos 6 Meses (${gte} a ${lte})</h2>
-      <div class="filter-chips-bar">
-        ${filters.map(f => `
-          <button class="filter-chip ${f.key === activeFilter ? 'active' : ''}"
-                  onclick="App.renderMovies6Months('${f.key}')">${f.label}</button>
-        `).join('')}
-      </div>
-      <div class="media-grid" id="gridMovies"></div>
-    `;
-    this.populatePosterRow('gridMovies', items);
-  },
-
-  // SERIES CON FILTROS DE TMDB (6 MESES HACIA ATRÁS DESDE HOY)
-  async renderTV6Months(activeFilter = 'popular') {
-    const { gte, lte } = this.getSixMonthsWindow();
-    const filters = [
-      { key: 'popular', label: 'Populares (6 meses)' },
-      { key: 'airing_today', label: 'Emitiéndose Hoy (Airing Tonight)' },
-      { key: 'on_the_air', label: 'En Emisión (Currently Airing)' },
-      { key: 'new_series', label: 'Nuevas Series (Últimos 6 meses)' },
-      { key: 'netflix', label: 'En Netflix' },
-      { key: 'prime', label: 'En Prime Video' },
-      { key: 'disney', label: 'En Disney+' },
-      { key: 'free', label: 'Ver Gratis' },
-      { key: 'top_rated', label: 'Mejor Valoradas (6 meses)' }
-    ];
-
-    const params = {
-      'air_date.gte': gte,
-      'air_date.lte': lte,
-      watch_region: this.region,
-      sort_by: 'popularity.desc'
-    };
-
-    if (activeFilter === 'new_series') {
-      params['first_air_date.gte'] = gte;
-      params['first_air_date.lte'] = lte;
-    }
-    if (activeFilter === 'netflix') params.with_watch_providers = '8';
-    if (activeFilter === 'prime') params.with_watch_providers = '119';
-    if (activeFilter === 'disney') params.with_watch_providers = '337';
-    if (activeFilter === 'free') params.with_watch_monetization_types = 'free|ads';
-    if (activeFilter === 'top_rated') { params.sort_by = 'vote_average.desc'; params['vote_count.gte'] = 80; }
-
-    let items = [];
-    if (activeFilter === 'airing_today') {
-      const res = await this.fetchTMDB('/tv/airing_today');
-      items = res?.results || [];
-    } else if (activeFilter === 'on_the_air') {
-      const res = await this.fetchTMDB('/tv/on_the_air');
-      items = res?.results || [];
-    } else {
-      const p1 = await this.fetchTMDB('/discover/tv', { ...params, page: 1 });
-      const p2 = await this.fetchTMDB('/discover/tv', { ...params, page: 2 });
-      items = [...(p1?.results || []), ...(p2?.results || [])];
-    }
-
-    items.forEach(i => i.media_type = 'tv');
-
-    const container = document.getElementById('catalogContainer');
-    container.innerHTML = `
-      <h2 class="row-title">📺 Series de TV — Ventana Últimos 6 Meses (${gte} a ${lte})</h2>
-      <div class="filter-chips-bar">
-        ${filters.map(f => `
-          <button class="filter-chip ${f.key === activeFilter ? 'active' : ''}"
-                  onclick="App.renderTV6Months('${f.key}')">${f.label}</button>
-        `).join('')}
-      </div>
-      <div class="media-grid" id="gridTV"></div>
-    `;
-    this.populatePosterRow('gridTV', items);
-  },
-
-  // SECCIÓN PREMIOS ÓSCAR (MEJOR PELÍCULA)
-  async renderOscars() {
-    const container = document.getElementById('catalogContainer');
-    container.innerHTML = `
-      <h2 class="row-title">🏆 Premios de la Academia (Óscar — Mejor Película)</h2>
-      <p style="color:#aaa; margin:8px 0 22px;">Ganadoras y destacadas históricas al Óscar a Mejor Película. Las que no estén en tus plataformas aparecen en gris.</p>
-      <div class="media-grid" id="gridOscars"></div>
-    `;
-
-    const promises = OSCAR_BEST_PICTURE_IDS.slice(0, 36).map(id => this.fetchTMDB(`/movie/${id}`));
-    const results = (await Promise.all(promises)).filter(Boolean);
-    this.populatePosterRow('gridOscars', results);
-  },
-
-  // SECCIÓN TOP 100 MEJORES DE IMDb / TMDB
-  async renderTop100() {
-    const container = document.getElementById('catalogContainer');
-    container.innerHTML = `
-      <h2 class="row-title">⭐ Las 100 Mejores Películas (Ranking IMDb / TMDB)</h2>
-      <p style="color:#aaa; margin:8px 0 22px;">Las 100 películas mejor valoradas de la historia. Si un clásico no está en tus plataformas, su póster se muestra en gris.</p>
-      <div class="media-grid" id="gridTop100"></div>
-    `;
-
-    const pages = await Promise.all([1, 2, 3, 4, 5].map(page =>
-      this.fetchTMDB('/movie/top_rated', { page })
-    ));
-    const all100 = pages.flatMap(p => p?.results || []).slice(0, 100);
-    this.populatePosterRow('gridTop100', all100, true);
-  },
-
-  // SECCIÓN INFANTILES Y FAMILIA
-  async renderKids(subFilter = 'popular') {
-    const { gte, lte } = this.getSixMonthsWindow();
-    const params = {
-      with_genres: '16,10751', // Animación + Familia
-      watch_region: this.region,
-      sort_by: 'popularity.desc'
-    };
-
-    if (subFilter === 'recent') {
-      params['primary_release_date.gte'] = gte;
-      params['primary_release_date.lte'] = lte;
-    } else if (subFilter === 'top') {
-      params.sort_by = 'vote_average.desc';
-      params['vote_count.gte'] = 200;
-    }
-
-    const p1 = await this.fetchTMDB('/discover/movie', { ...params, page: 1 });
-    const p2 = await this.fetchTMDB('/discover/movie', { ...params, page: 2 });
-    const items = [...(p1?.results || []), ...(p2?.results || [])];
-
-    const container = document.getElementById('catalogContainer');
-    container.innerHTML = `
-      <h2 class="row-title">🎈 Sección Infantiles y Familia</h2>
-      <div class="filter-chips-bar">
-        <button class="filter-chip ${subFilter === 'popular' ? 'active' : ''}" onclick="App.renderKids('popular')">Más Populares</button>
-        <button class="filter-chip ${subFilter === 'recent' ? 'active' : ''}" onclick="App.renderKids('recent')">Estrenos Últimos 6 Meses</button>
-        <button class="filter-chip ${subFilter === 'top' ? 'active' : ''}" onclick="App.renderKids('top')">Mejor Valoradas</button>
-      </div>
-      <div class="media-grid" id="gridKids"></div>
-    `;
-    this.populatePosterRow('gridKids', items);
   },
 
   async renderMyList() {
     const container = document.getElementById('catalogContainer');
     container.innerHTML = `
       <h2 class="row-title">📌 Mi Lista</h2>
-      <div class="media-grid" id="gridMyList"></div>
+      <div class="media-grid" id="gridMyList" style="margin-top:18px;"></div>
     `;
     if (this.myList.length === 0) {
       document.getElementById('gridMyList').innerHTML = '<p style="color:#aaa;">Todavía no agregaste títulos a Mi Lista.</p>';
@@ -620,14 +841,12 @@ const App = {
     this.populatePosterRow('gridSearch', items);
   },
 
-  // BUSCADOR DE TRÁILERS PRIORIZANDO ESPAÑOL LATINO (DOBLADO) -> ESPAÑOL -> ORIGINAL
   async findBestTrailer(mediaType, id) {
-    // 1. Buscar en Español Latino (es-MX)
-    const esMX = await this.fetchTMDB(`/${mediaType}/${id}/videos`, { language: 'es-MX' });
-    // 2. Buscar en Español España (es-ES)
-    const esES = await this.fetchTMDB(`/${mediaType}/${id}/videos`, { language: 'es-ES' });
-    // 3. Buscar en Inglés (en-US) como respaldo
-    const enUS = await this.fetchTMDB(`/${mediaType}/${id}/videos`, { language: 'en-US' });
+    const [esMX, esES, enUS] = await Promise.all([
+      this.fetchTMDB(`/${mediaType}/${id}/videos`, { language: 'es-MX' }),
+      this.fetchTMDB(`/${mediaType}/${id}/videos`, { language: 'es-ES' }),
+      this.fetchTMDB(`/${mediaType}/${id}/videos`, { language: 'en-US' })
+    ]);
 
     const allVideos = [
       ...(esMX?.results || []),
@@ -635,7 +854,6 @@ const App = {
       ...(enUS?.results || [])
     ].filter(v => v.site === 'YouTube');
 
-    // Priorizar los que dicen "Doblado" o "Español" o son Trailer oficial en español
     const doblado = allVideos.find(v => /doblado|latino|español/i.test(v.name));
     if (doblado) return doblado;
 
@@ -696,11 +914,11 @@ const App = {
             <span class="provider-pill" style="margin-right:6px; margin-bottom:6px;">
               <img src="https://image.tmdb.org/t/p/w92${p.logo_path}" /> ${p.provider_name}
             </span>
-          `).join('') : '<span style="color:#888;">No figura en plataformas de streaming registradas en tu región (Póster en gris).</span>'}
+          `).join('') : '<span style="color:#888;">En ninguna plataforma de streaming registrada en tu región.</span>'}
         </div>
         <div style="margin-top:14px;">
           <a href="${ytSearchUrl}" target="_blank" style="color:#e50914; font-weight:700; text-decoration:none; font-size:14px;">
-            🔎 Abrir búsqueda de Tráiler Español Latino en YouTube ↗
+            🔎 Buscar Tráiler Español Latino en YouTube ↗
           </a>
         </div>
       </div>
@@ -721,17 +939,20 @@ const App = {
     this.openDetail(item.media_type, item.id, false);
   },
 
-  openSettings() {
+  switchSettingsTab(tab) {
+    document.getElementById('tabBtnApis').classList.toggle('active', tab === 'apis');
+    document.getElementById('tabBtnPlatforms').classList.toggle('active', tab === 'platforms');
+    document.getElementById('settingsTabApis').classList.toggle('hidden', tab !== 'apis');
+    document.getElementById('settingsTabPlatforms').classList.toggle('hidden', tab !== 'platforms');
+  },
+
+  async openSettings(defaultTab = 'apis') {
     document.getElementById('apiKeyInput').value = this.apiKey;
+    document.getElementById('omdbKeyInput').value = this.omdbKey;
     document.getElementById('regionSelect').value = this.region;
-    const grid = document.getElementById('platformsSelector');
-    grid.innerHTML = PLATFORMS_LIST.map(p => `
-      <label class="platform-check">
-        <input type="checkbox" value="${p.id}" ${this.myPlatforms.includes(p.id) ? 'checked' : ''} />
-        <span>${p.name}</span>
-      </label>
-    `).join('');
     document.getElementById('settingsModal').classList.remove('hidden');
+    this.switchSettingsTab(defaultTab);
+    await this.loadAllRegionProviders(this.region);
   },
 
   closeSettings() {
@@ -740,18 +961,22 @@ const App = {
 
   saveSettings() {
     const key = document.getElementById('apiKeyInput').value.trim();
+    const omdb = document.getElementById('omdbKeyInput').value.trim();
     const reg = document.getElementById('regionSelect').value;
     const checks = Array.from(document.querySelectorAll('#platformsSelector input:checked')).map(c => Number(c.value));
 
     this.apiKey = key;
+    this.omdbKey = omdb;
     this.region = reg;
     this.myPlatforms = checks;
     this.providerCache = {};
 
     localStorage.setItem('rebobinar_tmdb_key', key);
+    localStorage.setItem('rebobinar_omdb_key', omdb);
     localStorage.setItem('rebobinar_region', reg);
     localStorage.setItem('rebobinar_platforms', JSON.stringify(checks));
 
+    this.updatePlatCountBadge();
     this.closeSettings();
     this.navigate(this.currentView || 'home');
   }
