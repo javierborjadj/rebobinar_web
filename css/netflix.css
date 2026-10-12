@@ -1,0 +1,633 @@
+﻿:root {
+  --bg-main: #141414;
+  --bg-card: #1f1f1f;
+  --bg-modal: #181818;
+  --netflix-red: #e50914;
+  --text-main: #ffffff;
+  --text-muted: #b3b3b3;
+  --accent-gold: #f5c518;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Navbar Estilo Netflix */
+.navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 68px;
+  padding: 0 4%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+  background: linear-gradient(180deg, rgba(0,0,0,0.85) 10%, transparent);
+  transition: background-color 0.3s ease;
+}
+
+.navbar.scrolled {
+  background-color: #141414;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.6);
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.logo {
+  color: var(--netflix-red);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.nav-links {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.nav-item {
+  color: #e5e5e5;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.nav-item:hover, .nav-item.active {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.search-box input {
+  background: rgba(0,0,0,0.75);
+  border: 1px solid rgba(255,255,255,0.4);
+  color: #fff;
+  padding: 7px 14px;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 240px;
+  transition: width 0.25s, border-color 0.2s;
+}
+
+.search-box input:focus {
+  width: 300px;
+  border-color: #fff;
+  outline: none;
+}
+
+.btn-platforms {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 7px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-platforms:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+/* Hero Banner */
+.hero {
+  position: relative;
+  height: 76vh;
+  min-height: 480px;
+  max-height: 720px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 4%;
+  margin-bottom: -70px;
+}
+
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 20%;
+  z-index: 1;
+  transition: background-image 0.5s ease;
+}
+
+.hero-vignette {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #141414 15%, rgba(20,20,20,0.7) 50%, transparent 100%),
+              linear-gradient(180deg, rgba(20,20,20,0.3) 0%, transparent 40%, #141414 96%);
+  z-index: 2;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+  max-width: 620px;
+  padding-top: 40px;
+}
+
+.hero-badge {
+  color: var(--netflix-red);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.hero-title {
+  font-size: clamp(28px, 4.5vw, 54px);
+  font-weight: 900;
+  line-height: 1.08;
+  margin-bottom: 14px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 15px;
+  color: #46d369;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.hero-desc {
+  color: #e5e5e5;
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
+
+.hero-providers {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.provider-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(4px);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.provider-pill img {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-play, .btn-info {
+  border: none;
+  padding: 11px 24px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.15s, opacity 0.2s;
+}
+
+.btn-play {
+  background: #ffffff;
+  color: #000000;
+}
+
+.btn-play:hover {
+  background: rgba(255,255,255,0.85);
+}
+
+.btn-info {
+  background: rgba(109, 109, 110, 0.7);
+  color: #ffffff;
+}
+
+.btn-info:hover {
+  background: rgba(109, 109, 110, 0.5);
+}
+
+/* Filas y Secciones Estilo Netflix / TMDB */
+.catalog-container {
+  position: relative;
+  z-index: 10;
+  padding: 10px 4% 60px;
+}
+
+.row-section {
+  margin-bottom: 38px;
+}
+
+.row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.row-title {
+  font-size: 21px;
+  font-weight: 700;
+  color: #e5e5e5;
+}
+
+.pill-tabs {
+  display: inline-flex;
+  background: #222;
+  border: 1px solid #3a3a3a;
+  border-radius: 30px;
+  padding: 3px;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.pill-tab {
+  background: transparent;
+  color: #ccc;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pill-tab.active {
+  background: var(--netflix-red);
+  color: #fff;
+}
+
+.row-wrapper {
+  position: relative;
+}
+
+.row-scroller {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 10px 0 18px;
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+
+.row-scroller::-webkit-scrollbar {
+  height: 6px;
+}
+.row-scroller::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+/* Tarjetas de Póster */
+.poster-card {
+  flex: 0 0 185px;
+  background: var(--bg-card);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.poster-card:hover {
+  transform: scale(1.06);
+  z-index: 20;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.85);
+}
+
+.poster-img-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  background: #2a2a2a;
+  overflow: hidden;
+}
+
+.poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: filter 0.3s ease;
+}
+
+/* REGLA CLAVE: Si NO está en las plataformas seleccionadas, póster en GRIS */
+.poster-card.unavailable .poster-img {
+  filter: grayscale(100%) contrast(0.95) brightness(0.75);
+}
+
+.poster-card.unavailable:hover .poster-img {
+  filter: grayscale(85%) brightness(0.85);
+}
+
+.badge-unavailable {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.82);
+  color: #aaa;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  border: 1px solid #555;
+}
+
+.badge-providers {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  background: rgba(0,0,0,0.75);
+  padding: 3px;
+  border-radius: 6px;
+}
+
+.badge-providers img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+}
+
+.badge-rank {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--netflix-red);
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.poster-info {
+  padding: 10px;
+}
+
+.poster-title {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.poster-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.rating-star {
+  color: var(--accent-gold);
+  font-weight: 700;
+}
+
+/* Tarjetas de Últimos Tráilers (16:9) */
+.trailer-card {
+  flex: 0 0 310px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+.trailer-card:hover {
+  transform: scale(1.04);
+}
+
+.trailer-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-circle {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(229, 9, 20, 0.9);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+}
+
+/* Grilla para Vistas Completas (Películas, Series, Óscar, Top 100, Infantiles) */
+.filter-chips-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 20px 0 24px;
+}
+
+.filter-chip {
+  background: #222;
+  color: #ddd;
+  border: 1px solid #3a3a3a;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-chip:hover, .filter-chip.active {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 18px;
+}
+
+.media-grid .poster-card {
+  flex: unset;
+  width: 100%;
+}
+
+/* Modales */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.modal-card {
+  background: var(--bg-modal);
+  width: 100%;
+  max-width: 850px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.9);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.settings-card {
+  padding: 28px;
+  max-width: 640px;
+}
+
+.settings-sub {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin: 8px 0 18px;
+  line-height: 1.4;
+}
+
+.field-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ddd;
+  margin: 14px 0 6px;
+}
+
+.web-input {
+  width: 100%;
+  padding: 12px;
+  background: #262626;
+  border: 1px solid #444;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
+.platforms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.platform-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #252525;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid #383838;
+}
+
+.platform-check input {
+  accent-color: var(--netflix-red);
+}
+
+.settings-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-primary {
+  background: var(--netflix-red);
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 4px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #333;
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 4px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.video-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.detail-body {
+  padding: 24px;
+}

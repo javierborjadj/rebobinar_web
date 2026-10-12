@@ -1,41 +1,89 @@
-﻿<!doctype html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=1280, user-scalable=no">
-<meta name="referrer" content="strict-origin-when-cross-origin">
-<title>Rebobinar</title>
-<link rel="stylesheet" href="css/app.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rebobinar — Streaming Guide</title>
+  <link rel="stylesheet" href="css/netflix.css" />
 </head>
-<body class="theme-neon fx-scan size-m">
-<div id="app">
-  <nav id="topnav"></nav>
-  <main id="screen"></main>
-</div>
-<div id="layers"></div>
-<div id="toast" role="status" aria-live="polite"></div>
-<div id="fx" aria-hidden="true"></div>
+<body>
+  <!-- Barra de Navegación Superior Estilo Netflix -->
+  <header class="navbar" id="navbar">
+    <div class="nav-left">
+      <div class="logo" onclick="App.navigate('home')">REBOBINAR</div>
+      <nav class="nav-links">
+        <a href="#" class="nav-item active" data-tab="home" onclick="App.navigate('home')">Inicio</a>
+        <a href="#" class="nav-item" data-tab="movies" onclick="App.navigate('movies')">Películas (6 Meses)</a>
+        <a href="#" class="nav-item" data-tab="tv" onclick="App.navigate('tv')">Series (6 Meses)</a>
+        <a href="#" class="nav-item" data-tab="oscars" onclick="App.navigate('oscars')">🏆 Premios Óscar</a>
+        <a href="#" class="nav-item" data-tab="top100" onclick="App.navigate('top100')">⭐ Top 100 IMDb</a>
+        <a href="#" class="nav-item" data-tab="kids" onclick="App.navigate('kids')">🎈 Infantiles</a>
+        <a href="#" class="nav-item" data-tab="mylist" onclick="App.navigate('mylist')">Mi Lista</a>
+      </nav>
+    </div>
+    <div class="nav-right">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Títulos, personas, géneros..." oninput="App.onSearch(this.value)" />
+      </div>
+      <button class="btn-platforms" onclick="App.openSettings()" title="Configurar API y Plataformas">⚙️ Plataformas / API</button>
+    </div>
+  </header>
 
-<script src="js/util.js"></script>
-<script src="js/store.js"></script>
-<script src="js/platforms.js"></script>
-<script src="js/demo.js"></script>
-<script src="js/api.js"></script>
-<script src="js/nav.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/trailer.js"></script>
-<script src="js/screens/home.js"></script>
-<script src="js/screens/genres.js"></script>
-<script src="js/screens/releases.js"></script>
-<script src="js/screens/detail.js"></script>
-<script src="js/screens/search.js"></script>
-<script src="js/screens/person.js"></script>
-<script src="js/screens/mylist.js"></script>
-<script src="js/screens/roulette.js"></script>
-<script src="js/screens/settings.js"></script>
-<script src="js/screens/setup.js"></script>
-<script src="js/app.js"></script>
-  <script src="js/pc-support.js"></script>
+  <!-- Contenedor Principal -->
+  <main id="mainContent">
+    <!-- Hero Banner Estilo Netflix -->
+    <section class="hero" id="heroBanner">
+      <div class="hero-backdrop" id="heroBackdrop"></div>
+      <div class="hero-vignette"></div>
+      <div class="hero-content" id="heroContent">
+        <div class="hero-badge">★ DESTACADO EN REBOBINAR</div>
+        <h1 class="hero-title" id="heroTitle">Cargando catálogo...</h1>
+        <div class="hero-meta" id="heroMeta"></div>
+        <p class="hero-desc" id="heroDesc"></p>
+        <div class="hero-providers" id="heroProviders"></div>
+        <div class="hero-buttons" id="heroButtons"></div>
+      </div>
+    </section>
+
+    <!-- Contenedor Dinámico de Filas o Grillas -->
+    <div class="catalog-container" id="catalogContainer"></div>
+  </main>
+
+  <!-- Modal de Detalles y Reproductor de Tráiler -->
+  <div class="modal-overlay hidden" id="detailModal" onclick="if(event.target===this) App.closeModal()">
+    <div class="modal-card" id="detailContent"></div>
+  </div>
+
+  <!-- Modal de Configuración (API Key + Mis Plataformas) -->
+  <div class="modal-overlay hidden" id="settingsModal" onclick="if(event.target===this) App.closeSettings()">
+    <div class="modal-card settings-card">
+      <h2>Configuración de Rebobinar Web</h2>
+      <p class="settings-sub">Pegá tu Clave de API de TMDB (v3 auth de 32 caracteres) o Token de lectura, y elegí tus plataformas contratadas. Los pósters que NO estén en tus plataformas se verán en gris.</p>
+      
+      <label class="field-label">Clave de API de TMDB (32 caracteres) o Token:</label>
+      <input type="text" id="apiKeyInput" class="web-input" placeholder="Pegá acá con Ctrl+V tu clave de TMDB..." />
+
+      <label class="field-label">País del catálogo de Streaming:</label>
+      <select id="regionSelect" class="web-input">
+        <option value="AR">Argentina (AR)</option>
+        <option value="ES">España (ES)</option>
+        <option value="MX">México (MX)</option>
+        <option value="CL">Chile (CL)</option>
+        <option value="CO">Colombia (CO)</option>
+        <option value="UY">Uruguay (UY)</option>
+        <option value="US">Estados Unidos (US)</option>
+      </select>
+
+      <label class="field-label">Mis Plataformas (Destildá las que no uses para poner en gris lo que no esté disponible):</label>
+      <div class="platforms-grid" id="platformsSelector"></div>
+
+      <div class="settings-actions">
+        <button class="btn-primary" onclick="App.saveSettings()">Guardar y Actualizar</button>
+        <button class="btn-secondary" onclick="App.closeSettings()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/netflix-app.js"></script>
 </body>
 </html>
-
