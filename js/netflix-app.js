@@ -52,10 +52,34 @@ const OSCAR_WINNERS_BY_YEAR = [
   { year: 1992, id: 274, title: 'El silencio de los inocentes' },
   { year: 1991, id: 581, title: 'Danza con lobos' },
   { year: 1990, id: 403, title: 'Conduciendo a Miss Daisy' },
+  { year: 1989, id: 380, title: 'Rain Man' },
+  { year: 1988, id: 746, title: 'El último emperador' },
+  { year: 1987, id: 792, title: 'Pelotón' },
+  { year: 1986, id: 606, title: 'África mía' },
+  { year: 1985, id: 279, title: 'Amadeus' },
+  { year: 1984, id: 11050, title: 'La fuerza del cariño' },
+  { year: 1983, id: 783, title: 'Gandhi' },
+  { year: 1982, id: 9443, title: 'Carrozas de fuego' },
   { year: 1980, id: 12102, title: 'Kramer vs. Kramer' },
+  { year: 1979, id: 11778, title: 'El francotirador' },
+  { year: 1978, id: 703, title: 'Annie Hall' },
+  { year: 1977, id: 1366, title: 'Rocky' },
+  { year: 1976, id: 510, title: 'Atrapado sin salida' },
   { year: 1975, id: 240, title: 'El Padrino Parte II' },
+  { year: 1974, id: 9277, title: 'El golpe' },
   { year: 1973, id: 238, title: 'El Padrino' },
-  { year: 1944, id: 289, title: 'Casablanca' }
+  { year: 1972, id: 1051, title: 'Contacto en Francia' },
+  { year: 1971, id: 11202, title: 'Patton' },
+  { year: 1970, id: 3116, title: 'Perdidos en la noche' },
+  { year: 1966, id: 15121, title: 'La novicia rebelde' },
+  { year: 1963, id: 947, title: 'Lawrence de Arabia' },
+  { year: 1960, id: 665, title: 'Ben-Hur' },
+  { year: 1958, id: 826, title: 'El puente sobre el río Kwai' },
+  { year: 1955, id: 654, title: 'Nido de ratas' },
+  { year: 1951, id: 705, title: 'La malvada' },
+  { year: 1944, id: 289, title: 'Casablanca' },
+  { year: 1940, id: 770, title: 'Lo que el viento se llevó' },
+  { year: 1929, id: 631, title: 'Alas' }
 ];
 
 const App = {
@@ -66,7 +90,9 @@ const App = {
   myPlatforms: [8, 119, 337, 1899, 531, 350, 339, 619, 300, 457, 283, 11, 167, 546],
   myList: [],
   providerCache: {},
+  heroCandidates: [],
   currentView: 'home',
+  currentDecade: 'all',
 
   async init() {
     this.loadSavedConfig();
@@ -110,40 +136,46 @@ const App = {
     return d.toISOString().split('T')[0];
   },
 
-  getDatesForFilter(filterKey) {
+  getDatesForFilter(filterKey, decade = 'all') {
+    if (decade && decade !== 'all') {
+      if (decade === 'classic') {
+        return { gte: '1920-01-01', lte: '1969-12-31' };
+      }
+      const startYear = Number(decade);
+      return { gte: `${startYear}-01-01`, lte: `${startYear + 9}-12-31` };
+    }
+
     const today = new Date();
     const from = new Date();
     const to = new Date();
 
     if (filterKey === 'popular_home') {
-      // Para Populares del Inicio: última semana
       from.setDate(today.getDate() - 7);
       return { gte: this.formatDate(from), lte: this.formatDate(today) };
     }
     if (filterKey === 'new_releases') {
-      // Nuevas incorporaciones: últimas 3 semanas
       from.setDate(today.getDate() - 21);
       return { gte: this.formatDate(from), lte: this.formatDate(today) };
     }
     if (filterKey === 'theatres') {
       from.setDate(today.getDate() - 30);
       to.setMonth(today.getMonth() + 2);
-      return { gte: this.formatDate(from), lte: this.formatDate(to), label: 'En cartelera y próximos estrenos' };
+      return { gte: this.formatDate(from), lte: this.formatDate(to) };
     }
     if (filterKey === 'upcoming') {
       to.setMonth(today.getMonth() + 6);
-      return { gte: this.formatDate(today), lte: this.formatDate(to), label: 'Próximos estrenos' };
+      return { gte: this.formatDate(today), lte: this.formatDate(to) };
     }
     if (['streaming', 'netflix', 'prime', 'disney', 'new_series'].includes(filterKey)) {
       from.setDate(today.getDate() - 28);
       to.setMonth(today.getMonth() + 1);
-      return { gte: this.formatDate(from), lte: this.formatDate(to), label: 'Últimas 4 semanas en adelante' };
+      return { gte: this.formatDate(from), lte: this.formatDate(to) };
     }
     if (filterKey === 'popular') {
       from.setMonth(today.getMonth() - 6);
-      return { gte: this.formatDate(from), lte: this.formatDate(today), label: 'Últimos 6 meses' };
+      return { gte: this.formatDate(from), lte: this.formatDate(today) };
     }
-    return { gte: '', lte: '', label: 'Catálogo completo' };
+    return { gte: '', lte: '' };
   },
 
   async fetchTMDB(endpoint, params = {}) {
@@ -168,6 +200,65 @@ const App = {
     } catch (err) {
       console.error(err);
       return null;
+    }
+  },
+
+  // BOTONES DE PRUEBA DE APIS EN CONFIGURACIÓN
+  async testTmdbApi() {
+    const statusEl = document.getElementById('tmdbTestStatus');
+    const key = document.getElementById('apiKeyInput').value.trim();
+    if (!key) {
+      statusEl.style.color = '#ff5252';
+      statusEl.textContent = '⚠️ Ingresá una clave de TMDB para probar.';
+      return;
+    }
+    statusEl.style.color = '#f5c518';
+    statusEl.textContent = 'Probando conexión con TMDB...';
+
+    const url = new URL('https://api.themoviedb.org/3/configuration');
+    const headers = {};
+    if (key.startsWith('eyJ')) headers['Authorization'] = `Bearer ${key}`;
+    else url.searchParams.set('api_key', key);
+
+    try {
+      const res = await fetch(url.toString(), { headers });
+      if (res.ok) {
+        statusEl.style.color = '#46d369';
+        statusEl.textContent = '✓ ¡Conexión exitosa! La clave de TMDB funciona correctamente.';
+      } else {
+        statusEl.style.color = '#ff5252';
+        statusEl.textContent = `✕ Error (${res.status}): Clave de TMDB inválida o vencida.`;
+      }
+    } catch (e) {
+      statusEl.style.color = '#ff5252';
+      statusEl.textContent = '✕ Error de red al conectar con TMDB.';
+    }
+  },
+
+  async testOmdbApi() {
+    const statusEl = document.getElementById('omdbTestStatus');
+    const key = document.getElementById('omdbKeyInput').value.trim();
+    if (!key) {
+      statusEl.style.color = '#ff5252';
+      statusEl.textContent = '⚠️ Ingresá una clave de OMDb para probar.';
+      return;
+    }
+    statusEl.style.color = '#f5c518';
+    statusEl.textContent = 'Probando conexión con OMDb...';
+
+    try {
+      const res = await fetch(`https://www.omdbapi.com/?i=tt0111161&apikey=${encodeURIComponent(key)}`);
+      const data = await res.json();
+      if (res.ok && data && data.Response === 'True') {
+        statusEl.style.color = '#46d369';
+        statusEl.textContent = `✓ ¡Conexión exitosa! OMDb respondió (${data.Title} — IMDb ${data.imdbRating}).`;
+      } else {
+        statusEl.style.color = '#ff5252';
+        statusEl.textContent = `✕ Clave OMDb inválida: ${data?.Error || 'No autorizada'}`;
+      }
+    } catch (e) {
+      statusEl.style.color = '#ff5252';
+      statusEl.textContent = '✕ Error de red al conectar con OMDb.';
     }
   },
 
@@ -257,6 +348,7 @@ const App = {
 
   async navigate(view) {
     this.currentView = view;
+    this.currentDecade = 'all';
     document.querySelectorAll('.nav-item').forEach(el => {
       el.classList.toggle('active', el.dataset.tab === view);
     });
@@ -272,14 +364,24 @@ const App = {
     } else {
       hero.classList.add('hidden');
       container.style.paddingTop = '90px';
-      if (view === 'movies') await this.renderCatalogSection('movie', 'popular');
-      if (view === 'tv') await this.renderCatalogSection('tv', 'popular');
+      if (view === 'today') await this.renderWhatToWatchToday();
+      if (view === 'movies') await this.renderCatalogSection('movie', 'popular', 'all');
+      if (view === 'tv') await this.renderCatalogSection('tv', 'popular', 'all');
       if (view === 'genres') await this.renderGenresSection('movie', 28);
       if (view === 'oscars') await this.renderOscars('all');
       if (view === 'top100') await this.renderTop100('imdb');
-      if (view === 'kids') await this.renderCatalogSection('kids', 'popular');
+      if (view === 'kids') await this.renderCatalogSection('kids', 'popular', 'all');
       if (view === 'mylist') await this.renderMyList();
     }
+  },
+
+  // HERO ALEATORIO EN CADA CARGA + BOTÓN DE ROTAR
+  pickRandomHero() {
+    if (!this.heroCandidates || this.heroCandidates.length === 0) return;
+    const pool = this.heroCandidates.filter(x => x.backdrop_path);
+    const list = pool.length > 0 ? pool : this.heroCandidates;
+    const randomItem = list[Math.floor(Math.random() * list.length)];
+    this.updateHero(randomItem, randomItem.media_type || (randomItem.first_air_date ? 'tv' : 'movie'));
   },
 
   async updateHero(item, mediaType = 'movie') {
@@ -310,21 +412,20 @@ const App = {
     document.getElementById('heroButtons').innerHTML = `
       <button class="btn-play" onclick="App.openDetail('${mediaType}', ${item.id}, true)">▶ Ver Tráiler</button>
       <button class="btn-info" onclick="App.openDetail('${mediaType}', ${item.id}, false)">ⓘ Más información</button>
+      <button class="btn-info" onclick="App.pickRandomHero()" title="Cambiar título destacado">🔀 Otro destacado</button>
     `;
   },
 
-  // INICIO REORGANIZADO: MI LISTA + MÁS VISTAS + TENDENCIAS SEPARADAS + NUEVAS + POPULARES
   async renderHome() {
     const container = document.getElementById('catalogContainer');
     container.innerHTML = `
       ${this.myList.length > 0 ? `
         <section class="row-section">
-          <div class="row-header"><h2 class="row-title">📌 Continuar viendo / Mi Lista</h2></div>
+          <div class="row-header"><h2 class="row-title">📌 Mi Lista</h2></div>
           <div class="row-scroller" id="rowHomeMyList"></div>
         </section>
       ` : ''}
 
-      <!-- 1. Más vistas del día -->
       <section class="row-section">
         <div class="row-header">
           <h2 class="row-title">👁️ Más vistas del día</h2>
@@ -332,10 +433,9 @@ const App = {
         <div class="row-scroller" id="rowMostWatched"></div>
       </section>
 
-      <!-- 2. Tendencias en CINE -->
       <section class="row-section">
         <div class="row-header">
-          <h2 class="row-title">🎬 Tendencias en Películas (Cine)</h2>
+          <h2 class="row-title">🎬 Tendencias en Películas</h2>
           <div class="pill-tabs">
             <button class="pill-tab active" onclick="App.loadTrendingMedia('movie', 'day', this)">Hoy</button>
             <button class="pill-tab" onclick="App.loadTrendingMedia('movie', 'week', this)">Esta semana</button>
@@ -344,10 +444,9 @@ const App = {
         <div class="row-scroller" id="rowTrendingMovies"></div>
       </section>
 
-      <!-- 3. Tendencias en SERIES DE TV -->
       <section class="row-section">
         <div class="row-header">
-          <h2 class="row-title">📺 Tendencias en Series de TV</h2>
+          <h2 class="row-title">📺 Tendencias en Series</h2>
           <div class="pill-tabs">
             <button class="pill-tab active" onclick="App.loadTrendingMedia('tv', 'day', this)">Hoy</button>
             <button class="pill-tab" onclick="App.loadTrendingMedia('tv', 'week', this)">Esta semana</button>
@@ -356,10 +455,9 @@ const App = {
         <div class="row-scroller" id="rowTrendingTV"></div>
       </section>
 
-      <!-- 4. Nuevas incorporaciones -->
       <section class="row-section">
         <div class="row-header">
-          <h2 class="row-title">✨ Nuevas incorporaciones (Últimas semanas)</h2>
+          <h2 class="row-title">✨ Nuevas incorporaciones</h2>
           <div class="pill-tabs">
             <button class="pill-tab active" onclick="App.loadNewReleasesRow('movie', this)">Películas</button>
             <button class="pill-tab" onclick="App.loadNewReleasesRow('tv', this)">Series</button>
@@ -368,7 +466,6 @@ const App = {
         <div class="row-scroller" id="rowNewReleases"></div>
       </section>
 
-      <!-- 5. Lo más popular (última semana) -->
       <section class="row-section">
         <div class="row-header">
           <h2 class="row-title">🍿 Lo más popular</h2>
@@ -382,9 +479,8 @@ const App = {
         <div class="row-scroller" id="rowPopular"></div>
       </section>
 
-      <!-- 6. Tráilers y Gratis -->
       <section class="row-section">
-        <div class="row-header"><h2 class="row-title">🎥 Últimos Tráilers (Español / Doblados)</h2></div>
+        <div class="row-header"><h2 class="row-title">🎥 Últimos Tráilers</h2></div>
         <div class="row-scroller" id="rowTrailers"></div>
       </section>
 
@@ -414,7 +510,8 @@ const App = {
     const data = await this.fetchTMDB('/trending/all/day');
     const items = data?.results || [];
     if (items.length > 0) {
-      this.updateHero(items[0], items[0].media_type || 'movie');
+      this.heroCandidates = items;
+      this.pickRandomHero(); // Cambia aleatoriamente cada vez que cargás
     }
     this.populatePosterRow('rowMostWatched', items.slice(0, 16), true);
   },
@@ -524,47 +621,172 @@ const App = {
           </div>
           <div class="poster-info">
             <div class="poster-title">${m.title}</div>
-            <div class="poster-sub"><span>Estreno: ${(m.release_date || '').slice(0, 10)}</span> <span>🔊 Español / Sub</span></div>
+            <div class="poster-sub"><span>Estreno: ${(m.release_date || '').slice(0, 10)}</span> <span>🔊 Español</span></div>
           </div>
         </div>
       `;
     }).join('');
   },
 
-  async renderCatalogSection(sectionType, activeFilter = 'popular', customDates = null) {
+  // NUEVA SECCIÓN: ¿QUÉ PUEDO VER HOY? (CON OPCIONES DE FILTRO)
+  async renderWhatToWatchToday() {
+    const container = document.getElementById('catalogContainer');
+    container.innerHTML = `
+      <div class="today-recommender-box">
+        <h2 class="row-title">🎲 ¿Qué puedo ver hoy?</h2>
+        <p style="color:#aaa; font-size:14px; margin-top:4px;">Filtrá según tus ganas de hoy y descubrí recomendaciones disponibles en tus plataformas.</p>
+        <div class="today-controls-grid">
+          <div>
+            <label class="field-label">Formato</label>
+            <select id="todayType" class="web-input">
+              <option value="movie">🎬 Películas</option>
+              <option value="tv">📺 Series</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">¿Qué tenés ganas de ver?</label>
+            <select id="todayMood" class="web-input">
+              <option value="">Cualquier género</option>
+              <option value="28,12">🔥 Acción y Aventura</option>
+              <option value="35">😂 Comedia para pasar el rato</option>
+              <option value="53,9648">🕵️ Suspenso e Intriga</option>
+              <option value="878,14">🚀 Ciencia Ficción y Fantasía</option>
+              <option value="18">🎭 Drama atrapante</option>
+              <option value="27">👻 Terror</option>
+              <option value="16,10751">🎈 Familiar / Animación</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Calidad / Puntaje</label>
+            <select id="todayRating" class="web-input">
+              <option value="7.0">★ +7.0 (Muy buenas)</option>
+              <option value="7.8">★ +7.8 (Aclamadas)</option>
+              <option value="6.0">★ +6.0 (Todas)</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Época</label>
+            <select id="todayEra" class="web-input">
+              <option value="recent">Recientes (2020 - Hoy)</option>
+              <option value="2010">2010s</option>
+              <option value="2000">2000s</option>
+              <option value="classic">Clásicos (Antes del 2000)</option>
+              <option value="all">Cualquier año</option>
+            </select>
+          </div>
+          <div>
+            <label class="platform-check" style="height:42px; margin-top:6px;">
+              <input type="checkbox" id="todayOnlyMyPlats" checked />
+              <span>Solo en mis plataformas</span>
+            </label>
+          </div>
+          <div>
+            <button class="btn-primary" style="width:100%; height:42px;" onclick="App.runTodaySearch(true)">🎲 Buscar / Sortear</button>
+          </div>
+        </div>
+      </div>
+      <div id="todayHighlight" style="margin-bottom:24px;"></div>
+      <div class="media-grid" id="gridToday"></div>
+    `;
+    await this.runTodaySearch(false);
+  },
+
+  async runTodaySearch(shuffle = false) {
+    const type = document.getElementById('todayType')?.value || 'movie';
+    const mood = document.getElementById('todayMood')?.value || '';
+    const rating = document.getElementById('todayRating')?.value || '7.0';
+    const era = document.getElementById('todayEra')?.value || 'recent';
+    const onlyMine = document.getElementById('todayOnlyMyPlats')?.checked ?? true;
+
+    const isTV = type === 'tv';
+    const dateGte = isTV ? 'first_air_date.gte' : 'primary_release_date.gte';
+    const dateLte = isTV ? 'first_air_date.lte' : 'primary_release_date.lte';
+
+    const params = {
+      watch_region: this.region,
+      sort_by: 'popularity.desc',
+      'vote_average.gte': rating,
+      'vote_count.gte': 120
+    };
+
+    if (onlyMine && this.myPlatforms.length > 0) {
+      params.with_watch_providers = this.myPlatforms.join('|');
+    } else {
+      params.with_watch_monetization_types = 'flatrate|free|ads';
+    }
+
+    if (mood) {
+      // Adaptar IDs de géneros si es serie
+      if (isTV && mood === '28,12') params.with_genres = '10759';
+      else if (isTV && mood === '878,14') params.with_genres = '10765';
+      else params.with_genres = mood.replace(',', '|');
+    }
+
+    if (era === 'recent') params[dateGte] = '2020-01-01';
+    else if (era === '2010') { params[dateGte] = '2010-01-01'; params[dateLte] = '2019-12-31'; }
+    else if (era === '2000') { params[dateGte] = '2000-01-01'; params[dateLte] = '2009-12-31'; }
+    else if (era === 'classic') { params[dateLte] = '1999-12-31'; }
+
+    const randomPage = shuffle ? Math.floor(Math.random() * 3) + 1 : 1;
+    const [p1, p2] = await Promise.all([
+      this.fetchTMDB(`/discover/${type}`, { ...params, page: randomPage }),
+      this.fetchTMDB(`/discover/${type}`, { ...params, page: randomPage + 1 })
+    ]);
+
+    let items = [...(p1?.results || []), ...(p2?.results || [])].map(x => ({ ...x, media_type: type }));
+    if (shuffle) items = items.sort(() => Math.random() - 0.5);
+
+    this.populatePosterRow('gridToday', items);
+  },
+
+  // PELÍCULAS, SERIES E INFANTILES CON FILTROS LIMPIOS Y BARRA DE DÉCADAS
+  async renderCatalogSection(sectionType, activeFilter = 'popular', decade = this.currentDecade, customDates = null) {
+    this.currentDecade = decade;
     const isTV = sectionType === 'tv' || activeFilter === 'kids_tv';
     const isKids = sectionType === 'kids';
     const endpoint = isTV ? '/discover/tv' : '/discover/movie';
 
+    // Filtros en mejor orden y sin leyendas innecesarias
     const filters = isTV && !isKids ? [
-      { key: 'popular', label: 'Popular' },
-      { key: 'airing_today', label: 'Emitiéndose Hoy' },
-      { key: 'on_the_air', label: 'En Emisión' },
-      { key: 'new_series', label: 'Nuevas Series (4 sem.)' },
-      { key: 'netflix', label: 'Nuevas en Netflix' },
-      { key: 'prime', label: 'Nuevas en Prime' },
-      { key: 'disney', label: 'Nuevas en Disney+' },
-      { key: 'free', label: 'Ver Gratis' },
+      { key: 'popular', label: 'Populares' },
+      { key: 'new_series', label: 'Nuevas en Streaming' },
+      { key: 'netflix', label: 'Netflix' },
+      { key: 'prime', label: 'Prime Video' },
+      { key: 'disney', label: 'Disney+' },
       { key: 'top_rated', label: 'Mejor Valoradas' },
+      { key: 'acclaimed', label: 'Aclamadas' },
       { key: 'gems', label: 'Joyas Ocultas' },
-      { key: 'acclaimed', label: 'Aclamadas por la Crítica' }
+      { key: 'free', label: 'Ver Gratis' },
+      { key: 'airing_today', label: 'Emitiéndose Hoy' },
+      { key: 'on_the_air', label: 'En Emisión' }
     ] : [
-      { key: 'popular', label: 'Popular' },
+      { key: 'popular', label: 'Populares' },
+      { key: 'streaming', label: 'Nuevas en Streaming' },
+      { key: 'netflix', label: 'Netflix' },
+      { key: 'prime', label: 'Prime Video' },
+      { key: 'disney', label: 'Disney+' },
+      { key: 'top_rated', label: 'Mejor Valoradas' },
+      { key: 'acclaimed', label: 'Aclamadas' },
+      { key: 'gems', label: 'Joyas Ocultas' },
+      { key: 'free', label: 'Ver Gratis' },
       { key: 'theatres', label: 'En Cines' },
       { key: 'upcoming', label: 'Próximamente' },
-      { key: 'streaming', label: 'Nuevas en Streaming (4 sem.)' },
-      { key: 'netflix', label: 'Nuevas en Netflix' },
-      { key: 'prime', label: 'Nuevas en Prime' },
-      { key: 'disney', label: 'Nuevas en Disney+' },
       { key: 'rent', label: 'En Alquiler' },
-      { key: 'free', label: 'Ver Gratis' },
-      { key: 'top_rated', label: 'Mejor Valoradas' },
-      { key: 'gems', label: 'Joyas Ocultas' },
-      { key: 'acclaimed', label: 'Aclamadas por la Crítica' },
-      ...(isKids ? [{ key: 'kids_tv', label: '📺 Series Infantiles' }] : [])
+      ...(isKids ? [{ key: 'kids_tv', label: 'Series Infantiles' }] : [])
     ];
 
-    const preset = customDates || this.getDatesForFilter(activeFilter);
+    const decades = [
+      { key: 'all', label: 'Todas' },
+      { key: '2020', label: '2020s' },
+      { key: '2010', label: '2010s' },
+      { key: '2000', label: '2000s' },
+      { key: '1990', label: '90s' },
+      { key: '1980', label: '80s' },
+      { key: '1970', label: '70s' },
+      { key: 'classic', label: 'Clásicos' }
+    ];
+
+    const preset = customDates || this.getDatesForFilter(activeFilter, decade);
     const dateFieldGte = isTV ? 'first_air_date.gte' : 'primary_release_date.gte';
     const dateFieldLte = isTV ? 'first_air_date.lte' : 'primary_release_date.lte';
 
@@ -593,10 +815,10 @@ const App = {
     if (activeFilter === 'acclaimed') { params['vote_average.gte'] = 7.6; params['vote_count.gte'] = 150; }
 
     let items = [];
-    if (!isKids && activeFilter === 'airing_today') {
+    if (!isKids && activeFilter === 'airing_today' && decade === 'all') {
       const r = await this.fetchTMDB('/tv/airing_today');
       items = r?.results || [];
-    } else if (!isKids && activeFilter === 'on_the_air') {
+    } else if (!isKids && activeFilter === 'on_the_air' && decade === 'all') {
       const r = await this.fetchTMDB('/tv/on_the_air');
       items = r?.results || [];
     } else {
@@ -616,16 +838,22 @@ const App = {
       <div class="filter-chips-bar">
         ${filters.map(f => `
           <button class="filter-chip ${f.key === activeFilter ? 'active' : ''}"
-                  onclick="App.renderCatalogSection('${sectionType}', '${f.key}')">${f.label}</button>
+                  onclick="App.renderCatalogSection('${sectionType}', '${f.key}', '${decade}')">${f.label}</button>
+        `).join('')}
+      </div>
+      <div class="decade-chips-bar">
+        <span class="decade-label">Década:</span>
+        ${decades.map(d => `
+          <button class="decade-chip ${d.key === decade ? 'active' : ''}"
+                  onclick="App.renderCatalogSection('${sectionType}', '${activeFilter}', '${d.key}')">${d.label}</button>
         `).join('')}
       </div>
       <div class="date-filter-bar">
-        <span>📅 Fecha Desde:</span>
+        <span>📅 Desde:</span>
         <input type="date" id="filterDateGte" value="${preset.gte}" />
         <span>Hasta:</span>
         <input type="date" id="filterDateLte" value="${preset.lte}" />
-        <button class="btn-secondary" onclick="App.applyCustomDateFilter('${sectionType}', '${activeFilter}')">Aplicar Fechas</button>
-        <span class="date-badge-info">${preset.label || ''}</span>
+        <button class="btn-secondary" onclick="App.applyCustomDateFilter('${sectionType}', '${activeFilter}')">Filtrar fechas</button>
       </div>
       <div class="media-grid" id="gridCatalog"></div>
     `;
@@ -636,19 +864,64 @@ const App = {
   applyCustomDateFilter(sectionType, activeFilter) {
     const gte = document.getElementById('filterDateGte').value;
     const lte = document.getElementById('filterDateLte').value;
-    this.renderCatalogSection(sectionType, activeFilter, { gte, lte, label: 'Filtro personalizado' });
+    this.renderCatalogSection(sectionType, activeFilter, 'all', { gte, lte });
   },
 
+  // GÉNEROS CON ORDEN TRANSPARENTE: 1° NUEVAS STREAMING -> 2° POPULARES -> 3° TOP -> 4° RESTO
   async renderGenresSection(mediaType = 'movie', selectedGenreId = null) {
     const genreData = await this.fetchTMDB(`/genre/${mediaType}/list`);
     const genres = genreData?.genres || [];
     const activeGenre = selectedGenreId || (genres[0]?.id ?? 28);
 
-    const [p1, p2] = await Promise.all([
-      this.fetchTMDB(`/discover/${mediaType}`, { with_genres: activeGenre, sort_by: 'popularity.desc', page: 1 }),
-      this.fetchTMDB(`/discover/${mediaType}`, { with_genres: activeGenre, sort_by: 'popularity.desc', page: 2 })
+    const isTV = mediaType === 'tv';
+    const dateFieldGte = isTV ? 'first_air_date.gte' : 'primary_release_date.gte';
+    const dateFieldLte = isTV ? 'first_air_date.lte' : 'primary_release_date.lte';
+    const streamDates = this.getDatesForFilter('streaming');
+
+    // 1. Nuevas en Streaming de ese género, 2. Populares, 3. Top Valoradas, 4. Resto
+    const [newStreamRes, popRes, topRes, restRes] = await Promise.all([
+      this.fetchTMDB(`/discover/${mediaType}`, {
+        with_genres: activeGenre,
+        watch_region: this.region,
+        with_watch_monetization_types: 'flatrate',
+        [dateFieldGte]: streamDates.gte,
+        [dateFieldLte]: streamDates.lte,
+        sort_by: 'popularity.desc',
+        page: 1
+      }),
+      this.fetchTMDB(`/discover/${mediaType}`, {
+        with_genres: activeGenre,
+        sort_by: 'popularity.desc',
+        page: 1
+      }),
+      this.fetchTMDB(`/discover/${mediaType}`, {
+        with_genres: activeGenre,
+        sort_by: 'vote_average.desc',
+        'vote_count.gte': 300,
+        page: 1
+      }),
+      this.fetchTMDB(`/discover/${mediaType}`, {
+        with_genres: activeGenre,
+        sort_by: 'popularity.desc',
+        page: 2
+      })
     ]);
-    const items = [...(p1?.results || []), ...(p2?.results || [])].map(x => ({ ...x, media_type: mediaType }));
+
+    const combined = [
+      ...(newStreamRes?.results || []),
+      ...(popRes?.results || []),
+      ...(topRes?.results || []),
+      ...(restRes?.results || [])
+    ];
+
+    const seen = new Set();
+    const orderedItems = [];
+    for (const item of combined) {
+      if (!seen.has(item.id)) {
+        seen.add(item.id);
+        orderedItems.push({ ...item, media_type: mediaType });
+      }
+    }
 
     const container = document.getElementById('catalogContainer');
     container.innerHTML = `
@@ -667,7 +940,7 @@ const App = {
       </div>
       <div class="media-grid" id="gridGenres"></div>
     `;
-    this.populatePosterRow('gridGenres', items);
+    this.populatePosterRow('gridGenres', orderedItems);
   },
 
   async renderOscars(decadeFilter = 'all') {
@@ -676,14 +949,15 @@ const App = {
       { key: '2020', label: '2020s' },
       { key: '2010', label: '2010s' },
       { key: '2000', label: '2000s' },
-      { key: '1990', label: '1990s' },
-      { key: '1980', label: '1980s' },
+      { key: '1990', label: '90s' },
+      { key: '1980', label: '80s' },
+      { key: '1970', label: '70s' },
       { key: 'classic', label: 'Clásicos' }
     ];
 
     const filteredList = OSCAR_WINNERS_BY_YEAR.filter(item => {
       if (decadeFilter === 'all') return true;
-      if (decadeFilter === 'classic') return item.year < 1980;
+      if (decadeFilter === 'classic') return item.year < 1970;
       const dec = Number(decadeFilter);
       return item.year >= dec && item.year < dec + 10;
     });
@@ -753,7 +1027,6 @@ const App = {
     this.populatePosterRow('gridTop100', all100, true);
   },
 
-  // RENDERIZADO DE TARJETAS DE PÓSTER CON LOGOS GRANDES (34px)
   async populatePosterRow(containerId, items, showRank = false) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -953,6 +1226,8 @@ const App = {
     document.getElementById('apiKeyInput').value = this.apiKey;
     document.getElementById('omdbKeyInput').value = this.omdbKey;
     document.getElementById('regionSelect').value = this.region;
+    document.getElementById('tmdbTestStatus').textContent = '';
+    document.getElementById('omdbTestStatus').textContent = '';
     document.getElementById('settingsModal').classList.remove('hidden');
     this.switchSettingsTab(defaultTab);
     await this.loadAllRegionProviders(this.region);

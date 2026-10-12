@@ -13,6 +13,7 @@
       <div class="logo" onclick="App.navigate('home')">REBOBINAR</div>
       <nav class="nav-links">
         <a href="#" class="nav-item active" data-tab="home" onclick="App.navigate('home')">Inicio</a>
+        <a href="#" class="nav-item" data-tab="today" onclick="App.navigate('today')">🎲 ¿Qué ver hoy?</a>
         <a href="#" class="nav-item" data-tab="movies" onclick="App.navigate('movies')">Películas</a>
         <a href="#" class="nav-item" data-tab="tv" onclick="App.navigate('tv')">Series</a>
         <a href="#" class="nav-item" data-tab="genres" onclick="App.navigate('genres')">🎭 Géneros</a>
@@ -53,7 +54,7 @@
     <div class="modal-card" id="detailContent"></div>
   </div>
 
-  <!-- Modal de Configuración con 2 Apartados: APIs y Plataformas -->
+  <!-- Modal de Configuración con 2 Apartados y Botones de Prueba -->
   <div class="modal-overlay hidden" id="settingsModal" onclick="if(event.target===this) App.closeSettings()">
     <div class="modal-card settings-card">
       <div class="settings-header">
@@ -64,15 +65,23 @@
         </div>
       </div>
 
-      <!-- Apartado 1: APIs -->
+      <!-- Apartado 1: APIs con Botón de Probar -->
       <div id="settingsTabApis" class="settings-tab-body">
-        <p class="settings-sub">Configurá tus claves para obtener el catálogo actualizado, pósters, tráilers doblados y puntajes.</p>
+        <p class="settings-sub">Configurá y probá tus claves para obtener el catálogo actualizado, pósters, tráilers doblados y puntajes.</p>
         
         <label class="field-label">1. Clave de API de TMDB (32 caracteres v3 auth o Token):</label>
-        <input type="text" id="apiKeyInput" class="web-input" placeholder="Pegá acá con Ctrl+V tu clave de TMDB..." />
+        <div class="input-with-test">
+          <input type="text" id="apiKeyInput" class="web-input" placeholder="Pegá acá con Ctrl+V tu clave de TMDB..." />
+          <button class="btn-test" onclick="App.testTmdbApi()">Probar TMDB</button>
+        </div>
+        <div id="tmdbTestStatus" class="api-test-status"></div>
 
         <label class="field-label">2. Clave de API de OMDb (Opcional — para ratings de IMDb / Rotten Tomatoes):</label>
-        <input type="text" id="omdbKeyInput" class="web-input" placeholder="Pegá acá tu clave de OMDb (opcional)..." />
+        <div class="input-with-test">
+          <input type="text" id="omdbKeyInput" class="web-input" placeholder="Pegá acá tu clave de OMDb (opcional)..." />
+          <button class="btn-test" onclick="App.testOmdbApi()">Probar OMDb</button>
+        </div>
+        <div id="omdbTestStatus" class="api-test-status"></div>
 
         <label class="field-label">3. País del catálogo de Streaming:</label>
         <select id="regionSelect" class="web-input" onchange="App.loadAllRegionProviders(this.value)">
