@@ -1,108 +1,78 @@
 ﻿(function () {
-  console.log("Rebobinar Web: Soporte para Teclado de PC, Ctrl+V y Mouse activado.");
+  console.log("Rebobinar Web: Modo Inputs Web Nativos activado.");
 
-  function encontrarBotonesTeclado() {
-    const candidatos = Array.from(document.querySelectorAll('button, [tabindex], div, span'));
-    const mapa = {};
-    for (const el of candidatos) {
+  // Vigilar cuando aparece la pantalla de Setup, Ajustes o el Popup de teclado de TV
+  const observer = new MutationObserver(() => {
+    convertirTecladoTVenInputWeb();
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  function convertirTecladoTVenInputWeb() {
+    // Buscar todas las teclas del teclado virtual (0-9, A-F, BORRAR, LIMPIAR, LISTO)
+    const elementos = Array.from(document.querySelectorAll('button, [tabindex], div, span'));
+    const botonesTeclado = {};
+
+    for (const el of elementos) {
       if (el.children.length === 0 && el.offsetParent !== null) {
         const txt = (el.textContent || '').trim().toUpperCase();
-        if (/^[0-9A-ZÑ]$/.test(txt) || ['BORRAR', 'LIMPIAR', 'LISTO', 'ESPACIO', 'OK', 'BUSCAR'].includes(txt)) {
-          if (!mapa[txt]) mapa[txt] = el;
+        if (/^[0-9A-ZÑ]$/.test(txt) || ['BORRAR', 'LIMPIAR', 'LISTO', 'OK', 'ESPACIO'].includes(txt)) {
+          if (!botonesTeclado[txt]) botonesTeclado[txt] = el;
         }
       }
     }
-    return mapa;
-  }
 
-  function accionarElemento(el) {
-    if (!el) return false;
-    el.click();
-    el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
-    el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
-    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true }));
-    return true;
-  }
+    // Si detectamos el teclado de TV en pantalla y todavía no le pusimos un <input> real
+    if (botonesTeclado['0'] && botonesTeclado['A'] && botonesTeclado['LISTO']) {
+      const btnCero = botonesTeclado['0'];
+      const filaTeclas = btnCero.parentElement;
+      const contenedorModal = filaTeclas ? filaTeclas.parentElement : null;
 
-  // Soporte para pegar con Ctrl + V directo en cualquier popup o pantalla
-  window.addEventListener('paste', async (e) => {
-    const tag = document.activeElement ? document.activeElement.tagName : '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (contenedorModal && !contenedorModal.querySelector('.input-web-directo')) {
+        // Ocultar los botones de letras/números de TV para que no estorben
+        Array.from(contenedorModal.children).forEach(hijo => {
+          const textoHijo = (hijo.textContent || '').toUpperCase();
+          if (textoHijo.includes('0') && textoHijo.includes('1') && textoHijo.includes('2')) {
+            hijo.style.display = 'none';
+          }
+          if (textoHijo.includes('A') && textoHijo.includes('B') && textoHijo.includes('BORRAR')) {
+            hijo.style.display = 'none';
+          }
+        });
 
-    const texto = (e.clipboardData || window.clipboardData).getData('text').trim();
-    if (!texto) return;
+        // Crear un campo <input> real de página web donde se pueda escribir o pegar directo
+        const inputWeb = document.createElement('input');
+        inputWeb.type = 'text';
+        inputWeb.className = 'input-web-directo';
+        inputWeb.placeholder = 'Pegá acá tu clave con Ctrl+V o clic derecho -> Pegar...';
+        inputWeb.style.cssText = 'width: 100%; box-sizing: border-box; padding: 14px; margin: 12px 0; background: #001a0f; color: #00ff88; border: 2px solid #00ff88; border-radius: 6px; font-family: monospace; font-size: 18px; outline: none;';
 
-    const mapa = encontrarBotonesTeclado();
-    if (Object.keys(mapa).length > 5) {
-      e.preventDefault();
-      e.stopPropagation();
-      for (const char of texto) {
-        const c = char.toUpperCase();
-        if (mapa[c]) {
-          accionarElemento(mapa[c]);
-          await new Promise(r => setTimeout(r, 15));
-        } else if (c === ' ' && mapa['ESPACIO']) {
-          accionarElemento(mapa['ESPACIO']);
-          await new Promise(r => setTimeout(r, 15));
-        }
-      }
-    }
-  }, true);
+        // Insertarlo arriba del botón LISTO
+        contenedorModal.insertBefore(inputWeb, filaTeclas);
+        setTimeout(() => inputWeb.focus(), 50);
 
-  // Soporte para escribir con el teclado físico de la PC en cualquier teclado en pantalla
-  window.addEventListener('keydown', (e) => {
-    const tag = document.activeElement ? document.activeElement.tagName : '';
-    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-    const mapa = encontrarBotonesTeclado();
-    if (Object.keys(mapa).length < 5) return;
-
-    const k = e.key.toUpperCase();
-    if (/^[0-9A-ZÑ]$/.test(k) && mapa[k]) {
-      e.preventDefault();
-      e.stopPropagation();
-      accionarElemento(mapa[k]);
-    } else if (e.key === 'Backspace' && mapa['BORRAR']) {
-      e.preventDefault();
-      e.stopPropagation();
-      accionarElemento(mapa['BORRAR']);
-    } else if (e.key === 'Delete' && mapa['LIMPIAR']) {
-      e.preventDefault();
-      e.stopPropagation();
-      accionarElemento(mapa['LIMPIAR']);
-    } else if (e.key === ' ' && mapa['ESPACIO']) {
-      e.preventDefault();
-      e.stopPropagation();
-      accionarElemento(mapa['ESPACIO']);
-    }
-  }, true);
-
-  // Hacer que si el usuario hace clic en la caja verde de texto (pantalla del teclado), pueda pegar o escribir directo
-  document.addEventListener('click', (e) => {
-    const mapa = encontrarBotonesTeclado();
-    if (Object.keys(mapa).length > 5) {
-      const target = e.target;
-      const txt = (target.textContent || '').trim().toUpperCase();
-      // Si hace clic en el visor del código/texto (no en un botón suelto)
-      if (!mapa[txt] && target.children.length <= 2) {
-        const pegado = prompt("Pegá acá tu texto o clave de API con Ctrl+V y dale Aceptar:");
-        if (pegado !== null && pegado.trim() !== "") {
-          if (mapa['LIMPIAR']) accionarElemento(mapa['LIMPIAR']);
-          (async () => {
-            for (const char of pegado.trim()) {
-              const c = char.toUpperCase();
-              if (mapa[c]) {
-                accionarElemento(mapa[c]);
-                await new Promise(r => setTimeout(r, 15));
-              } else if (c === ' ' && mapa['ESPACIO']) {
-                accionarElemento(mapa['ESPACIO']);
-                await new Promise(r => setTimeout(r, 15));
-              }
+        // Sincronizar lo que escribas o pegues con la app original al instante
+        inputWeb.addEventListener('input', async () => {
+          const valor = inputWeb.value.trim();
+          if (botonesTeclado['LIMPIAR']) botonesTeclado['LIMPIAR'].click();
+          for (const char of valor) {
+            const c = char.toUpperCase();
+            if (botonesTeclado[c]) {
+              botonesTeclado[c].click();
+            } else if (c === ' ' && botonesTeclado['ESPACIO']) {
+              botonesTeclado['ESPACIO'].click();
             }
-          })();
-        }
+          }
+        });
+
+        // Si apretás Enter en el input, pulsa LISTO automáticamente
+        inputWeb.addEventListener('keydown', (e) => {
+          e.stopPropagation(); // Evita que la app de TV bloquee las teclas de tu PC
+          if (e.key === 'Enter' && botonesTeclado['LISTO']) {
+            botonesTeclado['LISTO'].click();
+          }
+        });
       }
     }
-  });
+  }
 })();
