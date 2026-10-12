@@ -1,78 +1,108 @@
 ﻿(function () {
-  console.log("Rebobinar Web: Modo Inputs Web Nativos activado.");
+  console.log("Rebobinar Web: Input directo sincronizado.");
 
-  // Vigilar cuando aparece la pantalla de Setup, Ajustes o el Popup de teclado de TV
   const observer = new MutationObserver(() => {
-    convertirTecladoTVenInputWeb();
+    iniciarInputDirecto();
   });
-
   observer.observe(document.body, { childList: true, subtree: true });
 
-  function convertirTecladoTVenInputWeb() {
-    // Buscar todas las teclas del teclado virtual (0-9, A-F, BORRAR, LIMPIAR, LISTO)
-    const elementos = Array.from(document.querySelectorAll('button, [tabindex], div, span'));
-    const botonesTeclado = {};
+  function buscarBotonEnPantalla(textoBuscado) {
+    const els = document.querySelectorAll('button, [tabindex], div, span');
+    for (const el of els) {
+      if (el.children.length === 0) {
+        const t = (el.textContent || '').trim().toUpperCase();
+        if (t === textoBuscado) return el;
+      }
+    }
+    return null;
+  }
 
-    for (const el of elementos) {
-      if (el.children.length === 0 && el.offsetParent !== null) {
-        const txt = (el.textContent || '').trim().toUpperCase();
-        if (/^[0-9A-ZÑ]$/.test(txt) || ['BORRAR', 'LIMPIAR', 'LISTO', 'OK', 'ESPACIO'].includes(txt)) {
-          if (!botonesTeclado[txt]) botonesTeclado[txt] = el;
+  function iniciarInputDirecto() {
+    const btnCero = buscarBotonEnPantalla('0');
+    const btnListo = buscarBotonEnPantalla('LISTO');
+    if (!btnCero || !btnListo) return;
+
+    const filaTeclas = btnCero.parentElement;
+    const modal = filaTeclas ? filaTeclas.parentElement : null;
+    if (!modal || modal.querySelector('.rebobinar-web-box')) return;
+
+    // Crear caja contenedora web
+    const box = document.createElement('div');
+    box.className = 'rebobinar-web-box';
+    box.style.cssText = 'margin: 12px 0; padding: 12px; background: #141026; border: 2px solid #ff2a85; border-radius: 8px;';
+
+    const label = document.createElement('div');
+    label.style.cssText = 'color: #ffd000; font-family: sans-serif; font-size: 13px; margin-bottom: 8px; font-weight: bold;';
+    label.textContent = 'MODO WEB: Pegá acá tu Clave de API (32 caracteres) y hacé clic en CARGAR:';
+
+    const filaInput = document.createElement('div');
+    filaInput.style.cssText = 'display: flex; gap: 8px;';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Pegá acá con Ctrl+V...';
+    input.style.cssText = 'flex: 1; padding: 10px; background: #001a0f; color: #00ff88; border: 1px solid #00ff88; border-radius: 4px; font-family: monospace; font-size: 16px;';
+
+    const btnCargar = document.createElement('button');
+    btnCargar.textContent = 'CARGAR Y GUARDAR';
+    btnCargar.style.cssText = 'padding: 10px 16px; background: #ffd000; color: #000; font-weight: bold; border: none; border-radius: 4px; cursor: pointer;';
+
+    const estado = document.createElement('div');
+    estado.style.cssText = 'color: #ccc; font-family: sans-serif; font-size: 12px; margin-top: 6px;';
+
+    input.addEventListener('keydown', (e) => e.stopPropagation());
+
+    input.addEventListener('input', () => {
+      const limpio = input.value.trim();
+      if (limpio.length > 40 || limpio.startsWith('eyJ')) {
+        estado.style.color = '#ff4444';
+        estado.textContent = '⚠️ Ese parece el Token largo. Copiá la "Clave de la API" (son 32 letras/números).';
+      } else {
+        estado.style.color = '#00ff88';
+        estado.textContent = `Longitud: ${limpio.length} / 32 caracteres.`;
+      }
+    });
+
+    btnCargar.addEventListener('click', async () => {
+      const valor = input.value.trim();
+      if (!valor) return;
+
+      btnCargar.disabled = true;
+      estado.style.color = '#ffd000';
+      estado.textContent = 'Cargando caracteres en la aplicación...';
+
+      const btnLimpiar = buscarBotonEnPantalla('LIMPIAR');
+      if (btnLimpiar) {
+        btnLimpiar.click();
+        await new Promise(r => setTimeout(r, 80));
+      }
+
+      for (let i = 0; i < valor.length; i++) {
+        const char = valor[i].toUpperCase();
+        // Buscamos el botón fresco en cada paso por si la app redibuja el DOM
+        const btnLetra = buscarBotonEnPantalla(char === ' ' ? 'ESPACIO' : char);
+        if (btnLetra) {
+          btnLetra.click();
+          await new Promise(r => setTimeout(r, 45));
         }
       }
-    }
 
-    // Si detectamos el teclado de TV en pantalla y todavía no le pusimos un <input> real
-    if (botonesTeclado['0'] && botonesTeclado['A'] && botonesTeclado['LISTO']) {
-      const btnCero = botonesTeclado['0'];
-      const filaTeclas = btnCero.parentElement;
-      const contenedorModal = filaTeclas ? filaTeclas.parentElement : null;
+      estado.style.color = '#00ff88';
+      estado.textContent = '¡Listo! Guardando...';
+      await new Promise(r => setTimeout(r, 150));
 
-      if (contenedorModal && !contenedorModal.querySelector('.input-web-directo')) {
-        // Ocultar los botones de letras/números de TV para que no estorben
-        Array.from(contenedorModal.children).forEach(hijo => {
-          const textoHijo = (hijo.textContent || '').toUpperCase();
-          if (textoHijo.includes('0') && textoHijo.includes('1') && textoHijo.includes('2')) {
-            hijo.style.display = 'none';
-          }
-          if (textoHijo.includes('A') && textoHijo.includes('B') && textoHijo.includes('BORRAR')) {
-            hijo.style.display = 'none';
-          }
-        });
+      const btnFin = buscarBotonEnPantalla('LISTO');
+      if (btnFin) btnFin.click();
+      btnCargar.disabled = false;
+    });
 
-        // Crear un campo <input> real de página web donde se pueda escribir o pegar directo
-        const inputWeb = document.createElement('input');
-        inputWeb.type = 'text';
-        inputWeb.className = 'input-web-directo';
-        inputWeb.placeholder = 'Pegá acá tu clave con Ctrl+V o clic derecho -> Pegar...';
-        inputWeb.style.cssText = 'width: 100%; box-sizing: border-box; padding: 14px; margin: 12px 0; background: #001a0f; color: #00ff88; border: 2px solid #00ff88; border-radius: 6px; font-family: monospace; font-size: 18px; outline: none;';
+    filaInput.appendChild(input);
+    filaInput.appendChild(btnCargar);
+    box.appendChild(label);
+    box.appendChild(filaInput);
+    box.appendChild(estado);
 
-        // Insertarlo arriba del botón LISTO
-        contenedorModal.insertBefore(inputWeb, filaTeclas);
-        setTimeout(() => inputWeb.focus(), 50);
-
-        // Sincronizar lo que escribas o pegues con la app original al instante
-        inputWeb.addEventListener('input', async () => {
-          const valor = inputWeb.value.trim();
-          if (botonesTeclado['LIMPIAR']) botonesTeclado['LIMPIAR'].click();
-          for (const char of valor) {
-            const c = char.toUpperCase();
-            if (botonesTeclado[c]) {
-              botonesTeclado[c].click();
-            } else if (c === ' ' && botonesTeclado['ESPACIO']) {
-              botonesTeclado['ESPACIO'].click();
-            }
-          }
-        });
-
-        // Si apretás Enter en el input, pulsa LISTO automáticamente
-        inputWeb.addEventListener('keydown', (e) => {
-          e.stopPropagation(); // Evita que la app de TV bloquee las teclas de tu PC
-          if (e.key === 'Enter' && botonesTeclado['LISTO']) {
-            botonesTeclado['LISTO'].click();
-          }
-        });
-      }
-    }
+    modal.insertBefore(box, filaTeclas);
+    setTimeout(() => input.focus(), 50);
   }
 })();
