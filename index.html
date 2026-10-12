@@ -49,12 +49,16 @@
     <div class="catalog-container" id="catalogContainer"></div>
   </main>
 
-  <!-- Modal de Detalles y Tráiler -->
-  <div class="modal-overlay hidden" id="detailModal" onclick="if(event.target===this) App.closeModal()">
-    <div class="modal-card" id="detailContent"></div>
+  <!-- Vista de Ficha de Película / Serie a Pantalla Completa (Sin Popups) -->
+  <div class="detail-view-container hidden" id="detailViewContainer">
+    <div class="detail-top-bar">
+      <button class="btn-secondary" onclick="App.goBackFromDetail()">⬅ Volver</button>
+      <div id="detailTopActions" style="display:flex; gap:10px;"></div>
+    </div>
+    <div id="detailViewBody" class="detail-full-body"></div>
   </div>
 
-  <!-- Modal de Configuración con 2 Apartados y Botones de Prueba -->
+  <!-- Modal de Configuración -->
   <div class="modal-overlay hidden" id="settingsModal" onclick="if(event.target===this) App.closeSettings()">
     <div class="modal-card settings-card">
       <div class="settings-header">
@@ -65,7 +69,6 @@
         </div>
       </div>
 
-      <!-- Apartado 1: APIs con Botón de Probar -->
       <div id="settingsTabApis" class="settings-tab-body">
         <p class="settings-sub">Configurá y probá tus claves para obtener el catálogo actualizado, pósters, tráilers doblados y puntajes.</p>
         
@@ -76,9 +79,9 @@
         </div>
         <div id="tmdbTestStatus" class="api-test-status"></div>
 
-        <label class="field-label">2. Clave de API de OMDb (Opcional — para ratings de IMDb / Rotten Tomatoes):</label>
+        <label class="field-label">2. Clave de API de OMDb (Para ratings de IMDb y Rotten Tomatoes):</label>
         <div class="input-with-test">
-          <input type="text" id="omdbKeyInput" class="web-input" placeholder="Pegá acá tu clave de OMDb (opcional)..." />
+          <input type="text" id="omdbKeyInput" class="web-input" placeholder="Pegá acá tu clave de OMDb..." />
           <button class="btn-test" onclick="App.testOmdbApi()">Probar OMDb</button>
         </div>
         <div id="omdbTestStatus" class="api-test-status"></div>
@@ -96,11 +99,10 @@
         </select>
       </div>
 
-      <!-- Apartado 2: Todas las Plataformas de TMDB -->
       <div id="settingsTabPlatforms" class="settings-tab-body hidden">
         <p class="settings-sub">Elegí todas las plataformas que tenés disponibles. Los pósters de películas o series que NO estén en tus plataformas seleccionadas se verán en gris.</p>
         <div class="plat-toolbar">
-          <input type="text" id="platSearchInput" class="web-input" placeholder="Buscar plataforma (ej: Netflix, Flow, MUBI, Pluto...)" oninput="App.filterPlatformsList(this.value)" style="flex:1;" />
+          <input type="text" id="platSearchInput" class="web-input" placeholder="Buscar plataforma..." oninput="App.filterPlatformsList(this.value)" style="flex:1;" />
           <button class="btn-secondary" onclick="App.toggleAllPlatforms(true)">Marcar todas</button>
           <button class="btn-secondary" onclick="App.toggleAllPlatforms(false)">Ninguna</button>
         </div>
