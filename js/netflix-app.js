@@ -125,12 +125,17 @@ const App = {
     const from = new Date();
     const to = new Date();
 
+    if (filterKey === 'streaming') {
+      // Últimos 2 meses para Nuevas en Streaming
+      from.setMonth(today.getMonth() - 2);
+      return { gte: this.formatDate(from), lte: this.formatDate(today) };
+    }
     if (filterKey === 'popular_home') {
       from.setDate(today.getDate() - 14);
       return { gte: this.formatDate(from), lte: this.formatDate(today) };
     }
     if (filterKey === 'new_releases') {
-      from.setDate(today.getDate() - 21);
+      from.setMonth(today.getMonth() - 2);
       return { gte: this.formatDate(from), lte: this.formatDate(today) };
     }
     if (filterKey === 'theatres') {
@@ -142,8 +147,8 @@ const App = {
       to.setMonth(today.getMonth() + 6);
       return { gte: this.formatDate(today), lte: this.formatDate(to) };
     }
-    if (['streaming', 'netflix', 'prime', 'disney', 'new_series'].includes(filterKey)) {
-      from.setDate(today.getDate() - 28);
+    if (['netflix', 'prime', 'disney', 'new_series'].includes(filterKey)) {
+      from.setMonth(today.getMonth() - 2);
       to.setMonth(today.getMonth() + 1);
       return { gte: this.formatDate(from), lte: this.formatDate(to) };
     }
@@ -325,12 +330,12 @@ const App = {
       hero.classList.add('hidden');
       container.style.paddingTop = '90px';
       if (view === 'today') await this.renderWhatToWatchToday();
-      if (view === 'movies') await this.renderCatalogSection('movie', 'popular', 'all');
-      if (view === 'tv') await this.renderCatalogSection('tv', 'popular', 'all');
+      if (view === 'movies') await this.renderCatalogSection('movie', 'streaming', 'all');
+      if (view === 'tv') await this.renderCatalogSection('tv', 'streaming', 'all');
       if (view === 'genres') await this.renderGenresSection('movie', 28);
       if (view === 'oscars') await this.renderOscars('all');
       if (view === 'top100') await this.renderTop100('imdb');
-      if (view === 'kids') await this.renderCatalogSection('kids', 'popular', 'all');
+      if (view === 'kids') await this.renderCatalogSection('kids', 'streaming', 'all');
       if (view === 'mylist') await this.renderMyList();
     }
   },
@@ -374,7 +379,6 @@ const App = {
     `;
   },
 
-  // ORDEN DE INICIO SOLICITADO: Tráilers -> Nuevas -> Más vistas -> Tendencias Cine -> Tendencias Series -> Popular -> Gratis
   async renderHome() {
     const container = document.getElementById('catalogContainer');
     container.innerHTML = `
@@ -427,7 +431,7 @@ const App = {
     this.loadMostWatchedDay();
     this.loadTrendingStreaming('movie', 'day');
     this.loadTrendingStreaming('tv', 'day');
-    this.loadPopularRow('streaming');
+    this.loadPopularRow();
     this.loadFreeRow('movie');
   },
 
@@ -438,14 +442,14 @@ const App = {
       this.heroCandidates = items;
       this.pickRandomHero();
     }
-    this.populatePosterRow('rowMostWatched', items.slice(0, 16), true, true);
+    this.populatePosterRow('rowMostWatched', items.slice(0, 16), true, false);
   },
 
   async loadTrendingStreaming(mediaType, timeWindow) {
     const data = await this.fetchTMDB(`/trending/${mediaType}/${timeWindow}`);
     const items = (data?.results || []).map(x => ({ ...x, media_type: mediaType }));
     const rowId = mediaType === 'movie' ? 'rowTrendingMovies' : 'rowTrendingTV';
-    this.populatePosterRow(rowId, items, false, true);
+    this.populatePosterRow(rowId, items, false, false);
   },
 
   async loadNewReleasesRow(mediaType) {
@@ -459,10 +463,10 @@ const App = {
     };
     const data = await this.fetchTMDB('/discover/movie', params);
     const items = (data?.results || []).map(x => ({ ...x, media_type: 'movie' }));
-    this.populatePosterRow('rowNewReleases', items, false, true);
+    this.populatePosterRow('rowNewReleases', items, false, false);
   },
 
-  async loadPopularRow(mode) {
+  async loadPopularRow() {
     const weekDates = this.getDatesForFilter('popular_home');
     let data = await this.fetchTMDB('/discover/movie', {
       sort_by: 'popularity.desc',
@@ -471,7 +475,7 @@ const App = {
       'primary_release_date.gte': weekDates.gte,
       'primary_release_date.lte': weekDates.lte
     });
-    this.populatePosterRow('rowPopular', data?.results || [], false, true);
+    this.populatePosterRow('rowPopular', data?.results || [], false, false);
   },
 
   async loadFreeRow(mediaType) {
@@ -481,7 +485,7 @@ const App = {
       with_watch_monetization_types: 'free|ads'
     });
     const items = (data?.results || []).map(x => ({ ...x, media_type: mediaType }));
-    this.populatePosterRow('rowFree', items, false, true);
+    this.populatePosterRow('rowFree', items, false, false);
   },
 
   async loadLatestTrailersRow() {
@@ -555,25 +559,36 @@ const App = {
     const data = await this.fetchTMDB(`/discover/${type}`, params);
     let items = (data?.results || []).map(x => ({ ...x, media_type: type }));
     if (shuffle) items = items.sort(() => Math.random() - 0.5);
-    this.populatePosterRow('gridToday', items, false, true);
+    this.populatePosterRow('gridToday', items, false, false);
   },
 
-  async renderCatalogSection(sectionType, activeFilter = 'popular', decade = this.currentDecade, customDates = null) {
+  async renderCatalogSection(sectionType, activeFilter = 'streaming', decade = this.currentDecade, customDates = null) {
     this.currentDecade = decade;
     const isTV = sectionType === 'tv' || activeFilter === 'kids_tv';
     const isKids = sectionType === 'kids';
     const endpoint = isTV ? '/discover/tv' : '/discover/movie';
 
-    const filters = [
-      { key: 'popular', label: 'Populares' },
+    const filters = isKids ? [
       { key: 'streaming', label: 'Nuevas en Streaming' },
+      { key: 'popular', label: 'Populares' },
       { key: 'netflix', label: 'Netflix' },
       { key: 'prime', label: 'Prime Video' },
       { key: 'disney', label: 'Disney+' },
       { key: 'top_rated', label: 'Mejor Valoradas' },
       { key: 'acclaimed', label: 'Aclamadas' },
       { key: 'gems', label: 'Joyas Ocultas' },
-      { key: 'free', label: 'Ver Gratis' }
+      { key: 'free', label: 'Ver Gratis' },
+      { key: 'kids_tv', label: 'Series Infantiles' }
+    ] : [
+      { key: 'streaming', label: 'Nuevas en Streaming' },
+      { key: 'popular', label: 'Populares' },
+      { key: 'top_rated', label: 'Mejor Valoradas' },
+      { key: 'acclaimed', label: 'Aclamadas' },
+      { key: 'gems', label: 'Joyas Ocultas' },
+      { key: 'free', label: 'Ver Gratis' },
+      { key: 'netflix', label: 'Netflix' },
+      { key: 'prime', label: 'Prime Video' },
+      { key: 'disney', label: 'Disney+' }
     ];
 
     const decades = [
@@ -585,20 +600,27 @@ const App = {
     const params = { watch_region: this.region, sort_by: 'popularity.desc' };
     if (preset.gte) params[isTV ? 'first_air_date.gte' : 'primary_release_date.gte'] = preset.gte;
     if (preset.lte) params[isTV ? 'first_air_date.lte' : 'primary_release_date.lte'] = preset.lte;
-    if (isKids) params.with_genres = isTV ? '10762,16' : '16,10751';
+    
+    if (isKids) {
+      if (activeFilter === 'kids_tv') {
+        params.with_genres = '10762';
+      } else {
+        params.with_genres = '16,10751';
+      }
+    }
 
     if (activeFilter === 'netflix') params.with_watch_providers = '8';
     else if (activeFilter === 'prime') params.with_watch_providers = '119';
     else if (activeFilter === 'disney') params.with_watch_providers = '337';
     else if (activeFilter === 'free') params.with_watch_monetization_types = 'free|ads';
     else if (activeFilter === 'top_rated') { params.sort_by = 'vote_average.desc'; params['vote_count.gte'] = 200; }
-    else params.with_watch_monetization_types = 'flatrate|free|ads';
+    else if (activeFilter === 'streaming') { params.with_watch_monetization_types = 'flatrate'; }
 
     const [p1, p2] = await Promise.all([
-      this.fetchTMDB(endpoint, { ...params, page: 1 }),
-      this.fetchTMDB(endpoint, { ...params, page: 2 })
+      this.fetchTMDB(isKids && activeFilter === 'kids_tv' ? '/discover/tv' : endpoint, { ...params, page: 1 }),
+      this.fetchTMDB(isKids && activeFilter === 'kids_tv' ? '/discover/tv' : endpoint, { ...params, page: 2 })
     ]);
-    let items = [...(p1?.results || []), ...(p2?.results || [])].map(i => ({ ...i, media_type: isTV ? 'tv' : 'movie' }));
+    let items = [...(p1?.results || []), ...(p2?.results || [])].map(i => ({ ...i, media_type: isKids && activeFilter === 'kids_tv' ? 'tv' : (isTV ? 'tv' : 'movie') }));
 
     const titleMap = { movie: '🎥 Películas', tv: '📺 Series de TV', kids: '🎈 Infantiles y Familia' };
     const container = document.getElementById('catalogContainer');
@@ -613,7 +635,7 @@ const App = {
       </div>
       <div class="media-grid" id="gridCatalog"></div>
     `;
-    this.populatePosterRow('gridCatalog', items, false, true);
+    this.populatePosterRow('gridCatalog', items, false, false);
   },
 
   async renderGenresSection(mediaType = 'movie', selectedGenreId = null) {
@@ -631,7 +653,7 @@ const App = {
       </div>
       <div class="media-grid" id="gridGenres"></div>
     `;
-    this.populatePosterRow('gridGenres', items, false, true);
+    this.populatePosterRow('gridGenres', items, false, false);
   },
 
   async renderOscars(decadeFilter = 'all') {
@@ -645,10 +667,31 @@ const App = {
   },
 
   async renderTop100(mode = 'imdb') {
+    const tabs = [
+      { key: 'imdb', label: '⭐ Top 100 IMDb' },
+      { key: 'tmdb', label: '🔥 Top 100 TMDB' },
+      { key: 'tomatoes', label: '🍅 Top 100 Rotten Tomatoes' }
+    ];
+
     const container = document.getElementById('catalogContainer');
-    container.innerHTML = `<h2 class="row-title">⭐ Top 100 Mejores Películas</h2><div class="media-grid" id="gridTop100"></div>`;
-    const data = await this.fetchTMDB('/movie/top_rated', { page: 1 });
-    this.populatePosterRow('gridTop100', data?.results || [], true, false);
+    container.innerHTML = `
+      <h2 class="row-title">⭐ Top 100 Mejores Películas</h2>
+      <div class="filter-chips-bar">
+        ${tabs.map(t => `<button class="filter-chip ${t.key === mode ? 'active' : ''}" onclick="App.renderTop100('${t.key}')">${t.label}</button>`).join('')}
+      </div>
+      <div class="media-grid" id="gridTop100"></div>
+    `;
+
+    let pages = [];
+    if (mode === 'imdb') {
+      pages = await Promise.all([1, 2, 3, 4, 5].map(page => this.fetchTMDB('/discover/movie', { sort_by: 'vote_average.desc', 'vote_count.gte': 12000, page })));
+    } else if (mode === 'tmdb') {
+      pages = await Promise.all([1, 2, 3, 4, 5].map(page => this.fetchTMDB('/movie/top_rated', { page })));
+    } else if (mode === 'tomatoes') {
+      pages = await Promise.all([1, 2, 3, 4, 5].map(page => this.fetchTMDB('/discover/movie', { sort_by: 'vote_average.desc', 'vote_count.gte': 2500, 'vote_count.lte': 15000, 'vote_average.gte': 7.9, page })));
+    }
+    const all100 = pages.flatMap(p => p?.results || []).slice(0, 100);
+    this.populatePosterRow('gridTop100', all100, true, false);
   },
 
   async populatePosterRow(containerId, items, showRank = false, requireStreaming = false) {
@@ -666,7 +709,7 @@ const App = {
     }
 
     if (processedItems.length === 0) {
-      container.innerHTML = '<p style="color:#888; font-size:14px; padding:10px;">No hay títulos en streaming disponibles.</p>';
+      container.innerHTML = '<p style="color:#888; font-size:14px; padding:10px;">No hay títulos disponibles.</p>';
       return;
     }
 
@@ -739,7 +782,6 @@ const App = {
     return videos.find(v => v.site === 'YouTube' && v.type === 'Trailer') || videos[0] || null;
   },
 
-  // VISTA DE FICHA INDEPENDIENTE (CON CÁLCULO DE HORA, TRAILER VOLUMEN BAJO Y COMENTARIOS)
   async openDetail(mediaType, id) {
     document.getElementById('heroBanner').classList.add('hidden');
     document.getElementById('catalogContainer').innerHTML = '';
@@ -763,12 +805,10 @@ const App = {
     const runtime = details.runtime || (details.episode_run_time ? details.episode_run_time[0] : 105);
     const inList = this.myList.some(x => x.id === details.id);
 
-    // Calcular hora de finalización
     const now = new Date();
     now.setMinutes(now.getMinutes() + (runtime || 105));
     const finishTimeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-    // Consultar OMDb si hay clave cargada para puntaje IMDb / Rotten Tomatoes
     let omdbRatings = '';
     if (this.omdbKey && details.imdb_id) {
       try {
@@ -911,5 +951,3 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
-
-
