@@ -114,59 +114,6 @@ const App = {
     return d.toISOString().split('T')[0];
   },
 
-  getDatesForFilter(filterKey, decade = 'all') {
-    if (decade && decade !== 'all') {
-      if (decade === 'classic') return { gte: '1920-01-01', lte: '1969-12-31' };
-      const startYear = Number(decade);
-      return { gte: `${startYear}-01-01`, lte: `${startYear + 9}-12-31` };
-    }
-
-    // Si es 'all', devolvemos rango amplio para que no traiga vacío
-    if (filterKey === 'streaming' || filterKey === 'new_releases') {
-      const today = new Date();
-      const from = new Date();
-      from.setMonth(today.getMonth() - 2);
-      return { gte: this.formatDate(from), lte: this.formatDate(today) };
-    }
-
-    const today = new Date();
-    const from = new Date();
-    const to = new Date();
-
-    if (filterKey === 'streaming') {
-      // Últimos 2 meses para Nuevas en Streaming
-      from.setMonth(today.getMonth() - 2);
-      return { gte: this.formatDate(from), lte: this.formatDate(today) };
-    }
-    if (filterKey === 'popular_home') {
-      from.setDate(today.getDate() - 14);
-      return { gte: this.formatDate(from), lte: this.formatDate(today) };
-    }
-    if (filterKey === 'new_releases') {
-      from.setMonth(today.getMonth() - 2);
-      return { gte: this.formatDate(from), lte: this.formatDate(today) };
-    }
-    if (filterKey === 'theatres') {
-      from.setDate(today.getDate() - 30);
-      to.setMonth(today.getMonth() + 2);
-      return { gte: this.formatDate(from), lte: this.formatDate(to) };
-    }
-    if (filterKey === 'upcoming') {
-      to.setMonth(today.getMonth() + 6);
-      return { gte: this.formatDate(today), lte: this.formatDate(to) };
-    }
-    if (['netflix', 'prime', 'disney', 'new_series'].includes(filterKey)) {
-      from.setMonth(today.getMonth() - 2);
-      to.setMonth(today.getMonth() + 1);
-      return { gte: this.formatDate(from), lte: this.formatDate(to) };
-    }
-    if (filterKey === 'popular') {
-      from.setMonth(today.getMonth() - 6);
-      return { gte: this.formatDate(from), lte: this.formatDate(today) };
-    }
-    return { gte: '', lte: '' };
-  },
-
   async fetchTMDB(endpoint, params = {}) {
     if (!this.apiKey) return null;
     const url = new URL(`https://api.themoviedb.org/3${endpoint}`);
@@ -338,6 +285,8 @@ const App = {
       hero.classList.add('hidden');
       container.style.paddingTop = '90px';
       if (view === 'today') await this.renderWhatToWatchToday();
+      if (view === 'cine') await this.renderCineSection('cartelera');
+      if (view === 'proximamente') await this.renderProximamenteSection('movie');
       if (view === 'movies') await this.renderCatalogSection('movie', 'streaming', 'all');
       if (view === 'tv') await this.renderCatalogSection('tv', 'streaming', 'all');
       if (view === 'genres') await this.renderGenresSection('movie', 28);
@@ -461,27 +410,30 @@ const App = {
   },
 
   async loadNewReleasesRow(mediaType) {
-    const dates = this.getDatesForFilter('new_releases');
-    const params = {
+    const today = new Date();
+    const from = new Date();
+    from.setMonth(today.getMonth() - 2);
+    const data = await this.fetchTMDB('/discover/movie', {
       sort_by: 'popularity.desc',
       watch_region: this.region,
       with_watch_monetization_types: 'flatrate',
-      'primary_release_date.gte': dates.gte,
-      'primary_release_date.lte': dates.lte
-    };
-    const data = await this.fetchTMDB('/discover/movie', params);
+      'primary_release_date.gte': this.formatDate(from),
+      'primary_release_date.lte': this.formatDate(today)
+    });
     const items = (data?.results || []).map(x => ({ ...x, media_type: 'movie' }));
     this.populatePosterRow('rowNewReleases', items, false, false);
   },
 
   async loadPopularRow() {
-    const weekDates = this.getDatesForFilter('popular_home');
+    const today = new Date();
+    const from = new Date();
+    from.setDate(today.getDate() - 14);
     let data = await this.fetchTMDB('/discover/movie', {
       sort_by: 'popularity.desc',
       watch_region: this.region,
       with_watch_monetization_types: 'flatrate',
-      'primary_release_date.gte': weekDates.gte,
-      'primary_release_date.lte': weekDates.lte
+      'primary_release_date.gte': this.formatDate(from),
+      'primary_release_date.lte': this.formatDate(today)
     });
     this.populatePosterRow('rowPopular', data?.results || [], false, false);
   },
@@ -497,11 +449,13 @@ const App = {
   },
 
   async loadLatestTrailersRow() {
-    const dates = this.getDatesForFilter('new_releases');
+    const today = new Date();
+    const from = new Date();
+    from.setMonth(today.getMonth() - 2);
     const data = await this.fetchTMDB('/discover/movie', {
       sort_by: 'popularity.desc',
-      'primary_release_date.gte': dates.gte,
-      'primary_release_date.lte': dates.lte
+      'primary_release_date.gte': this.formatDate(from),
+      'primary_release_date.lte': this.formatDate(today)
     });
     const row = document.getElementById('rowTrailers');
     if (!row) return;
@@ -520,6 +474,78 @@ const App = {
         </div>
       `;
     }).join('');
+  },
+
+  // SECCIÓN CINE (Hoy en cartelera y Próximas en cine durante el año)
+  async renderCineSection(subTab = 'cartelera') {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const endOfYear = new Date(currentYear, 11, 31);
+
+    let params = { sort_by: 'popularity.desc' };
+    if (subTab === 'cartelera') {
+      const past = new Date();
+      past.setDate(today.getDate() - 45);
+      params['primary_release_date.gte'] = this.formatDate(past);
+      params['primary_release_date.lte'] = this.formatDate(today);
+      params.with_release_type = '2|3';
+    } else {
+      params['primary_release_date.gte'] = this.formatDate(today);
+      params['primary_release_date.lte'] = this.formatDate(endOfYear);
+      params.with_release_type = '2|3';
+    }
+
+    const [p1, p2] = await Promise.all([
+      this.fetchTMDB('/discover/movie', { ...params, page: 1 }),
+      this.fetchTMDB('/discover/movie', { ...params, page: 2 })
+    ]);
+    const items = [...(p1?.results || []), ...(p2?.results || [])].map(x => ({ ...x, media_type: 'movie' }));
+
+    const container = document.getElementById('catalogContainer');
+    container.innerHTML = `
+      <h2 class="row-title">🎟️ Cine</h2>
+      <div class="filter-chips-bar">
+        <button class="filter-chip ${subTab === 'cartelera' ? 'active' : ''}" onclick="App.renderCineSection('cartelera')">Hoy en Cartelera</button>
+        <button class="filter-chip ${subTab === 'proximas' ? 'active' : ''}" onclick="App.renderCineSection('proximas')">Próximas en Cine (Todo el año)</button>
+      </div>
+      <div class="media-grid" id="gridCine"></div>
+    `;
+    this.populatePosterRow('gridCine', items, false, false);
+  },
+
+  // SECCIÓN PRÓXIMAMENTE (Próximos 3 meses para Películas y Series)
+  async renderProximamenteSection(mediaType = 'movie') {
+    const today = new Date();
+    const future = new Date();
+    future.setMonth(today.getMonth() + 3);
+
+    const isTV = mediaType === 'tv';
+    const endpoint = isTV ? '/discover/tv' : '/discover/movie';
+    const dateGte = isTV ? 'first_air_date.gte' : 'primary_release_date.gte';
+    const dateLte = isTV ? 'first_air_date.lte' : 'primary_release_date.lte';
+
+    const params = {
+      sort_by: 'popularity.desc',
+      [dateGte]: this.formatDate(today),
+      [dateLte]: this.formatDate(future)
+    };
+
+    const [p1, p2] = await Promise.all([
+      this.fetchTMDB(endpoint, { ...params, page: 1 }),
+      this.fetchTMDB(endpoint, { ...params, page: 2 })
+    ]);
+    const items = [...(p1?.results || []), ...(p2?.results || [])].map(x => ({ ...x, media_type: mediaType }));
+
+    const container = document.getElementById('catalogContainer');
+    container.innerHTML = `
+      <h2 class="row-title">⏳ Próximamente (Próximos 3 meses)</h2>
+      <div class="filter-chips-bar">
+        <button class="filter-chip ${mediaType === 'movie' ? 'active' : ''}" onclick="App.renderProximamenteSection('movie')">Películas</button>
+        <button class="filter-chip ${mediaType === 'tv' ? 'active' : ''}" onclick="App.renderProximamenteSection('tv')">Series</button>
+      </div>
+      <div class="media-grid" id="gridProximamente"></div>
+    `;
+    this.populatePosterRow('gridProximamente', items, false, false);
   },
 
   async renderWhatToWatchToday() {
@@ -604,17 +630,28 @@ const App = {
       { key: '2000', label: '2000s' }, { key: '1990', label: '90s' }, { key: '1980', label: '80s' }
     ];
 
-    const preset = customDates || this.getDatesForFilter(activeFilter, decade);
     const params = { watch_region: this.region, sort_by: 'popularity.desc' };
-    if (preset.gte) params[isTV ? 'first_air_date.gte' : 'primary_release_date.gte'] = preset.gte;
-    if (preset.lte) params[isTV ? 'first_air_date.lte' : 'primary_release_date.lte'] = preset.lte;
     
-    if (isKids) {
-      if (activeFilter === 'kids_tv') {
-        params.with_genres = '10762';
+    if (decade && decade !== 'all') {
+      if (decade === 'classic') {
+        params[isTV ? 'first_air_date.gte' : 'primary_release_date.gte'] = '1920-01-01';
+        params[isTV ? 'first_air_date.lte' : 'primary_release_date.lte'] = '1969-12-31';
       } else {
-        params.with_genres = '16,10751';
+        const startYear = Number(decade);
+        params[isTV ? 'first_air_date.gte' : 'primary_release_date.gte'] = `${startYear}-01-01`;
+        params[isTV ? 'first_air_date.lte' : 'primary_release_date.lte'] = `${startYear + 9}-12-31`;
       }
+    } else if (activeFilter === 'streaming') {
+      const today = new Date();
+      const from = new Date();
+      from.setMonth(today.getMonth() - 2);
+      params[isTV ? 'first_air_date.gte' : 'primary_release_date.gte'] = this.formatDate(from);
+      params[isTV ? 'first_air_date.lte' : 'primary_release_date.lte'] = this.formatDate(today);
+    }
+
+    if (isKids) {
+      if (activeFilter === 'kids_tv') params.with_genres = '10762';
+      else params.with_genres = '16,10751';
     }
 
     if (activeFilter === 'netflix') params.with_watch_providers = '8';
@@ -706,22 +743,12 @@ const App = {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    let processedItems = items;
-    if (requireStreaming) {
-      const verified = await Promise.all(items.map(async item => {
-        const mType = item.media_type || (item.first_air_date ? 'tv' : 'movie');
-        const provs = await this.getProviders(mType, item.id);
-        return provs.length > 0 ? item : null;
-      }));
-      processedItems = verified.filter(Boolean);
-    }
-
-    if (processedItems.length === 0) {
+    if (items.length === 0) {
       container.innerHTML = '<p style="color:#888; font-size:14px; padding:10px;">No hay títulos disponibles.</p>';
       return;
     }
 
-    container.innerHTML = processedItems.map((item, idx) => {
+    container.innerHTML = items.map((item, idx) => {
       const mType = item.media_type || (item.first_air_date ? 'tv' : 'movie');
       const cardId = `card_${containerId}_${mType}_${item.id}_${idx}`;
       const poster = item.poster_path ? `https://image.tmdb.org/t/p/w342${item.poster_path}` : '';
@@ -745,7 +772,7 @@ const App = {
       `;
     }).join('');
 
-    processedItems.forEach(async (item, idx) => {
+    items.forEach(async (item, idx) => {
       const mType = item.media_type || (item.first_air_date ? 'tv' : 'movie');
       const cardEl = document.getElementById(`card_${containerId}_${mType}_${item.id}_${idx}`);
       if (!cardEl) return;
@@ -756,12 +783,10 @@ const App = {
       if (misMatches.length > 0 && slot) {
         slot.innerHTML = `<div class="badge-providers">${misMatches.slice(0, 3).map(p => `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" />`).join('')}</div>`;
       } else if (providers.length > 0 && slot) {
-        // Está en streaming pero no la tenés -> Se ve en GRIS indicando la plataforma
         cardEl.classList.add('unavailable');
         slot.innerHTML = `<div class="badge-unavailable">No tenés: ${providers[0].provider_name}</div>`;
-      } else {
-        // Si no está en ninguna plataforma, la ocultamos de la pantalla para que no ensucie
-        cardEl.style.display = 'none';
+      } else if (slot) {
+        cardEl.style.display = 'none'; // Ocultar si dice "En ninguna"
       }
     });
   },
@@ -960,4 +985,3 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
-
