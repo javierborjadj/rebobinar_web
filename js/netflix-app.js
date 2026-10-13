@@ -121,6 +121,14 @@ const App = {
       return { gte: `${startYear}-01-01`, lte: `${startYear + 9}-12-31` };
     }
 
+    // Si es 'all', devolvemos rango amplio para que no traiga vacío
+    if (filterKey === 'streaming' || filterKey === 'new_releases') {
+      const today = new Date();
+      const from = new Date();
+      from.setMonth(today.getMonth() - 2);
+      return { gte: this.formatDate(from), lte: this.formatDate(today) };
+    }
+
     const today = new Date();
     const from = new Date();
     const to = new Date();
@@ -748,11 +756,12 @@ const App = {
       if (misMatches.length > 0 && slot) {
         slot.innerHTML = `<div class="badge-providers">${misMatches.slice(0, 3).map(p => `<img src="https://image.tmdb.org/t/p/w92${p.logo_path}" />`).join('')}</div>`;
       } else if (providers.length > 0 && slot) {
+        // Está en streaming pero no la tenés -> Se ve en GRIS indicando la plataforma
         cardEl.classList.add('unavailable');
         slot.innerHTML = `<div class="badge-unavailable">No tenés: ${providers[0].provider_name}</div>`;
-      } else if (slot) {
-        cardEl.classList.add('unavailable');
-        slot.innerHTML = `<div class="badge-unavailable">En ninguna</div>`;
+      } else {
+        // Si no está en ninguna plataforma, la ocultamos de la pantalla para que no ensucie
+        cardEl.style.display = 'none';
       }
     });
   },
@@ -951,3 +960,4 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+
