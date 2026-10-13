@@ -641,12 +641,14 @@ const App = {
         params[isTV ? 'first_air_date.gte' : 'primary_release_date.gte'] = `${startYear}-01-01`;
         params[isTV ? 'first_air_date.lte' : 'primary_release_date.lte'] = `${startYear + 9}-12-31`;
       }
-    } else if (activeFilter === 'streaming') {
-      const today = new Date();
-      const from = new Date();
-      from.setMonth(today.getMonth() - 2);
-      params[isTV ? 'first_air_date.gte' : 'primary_release_date.gte'] = this.formatDate(from);
-      params[isTV ? 'first_air_date.lte' : 'primary_release_date.lte'] = this.formatDate(today);
+    } else {
+      if (activeFilter === 'streaming') {
+        const today = new Date();
+        const from = new Date();
+        from.setMonth(today.getMonth() - 2);
+        params[isTV ? 'first_air_date.gte' : 'primary_release_date.gte'] = this.formatDate(from);
+        params[isTV ? 'first_air_date.lte' : 'primary_release_date.lte'] = this.formatDate(today);
+      }
     }
 
     if (isKids) {
@@ -985,3 +987,4 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+
