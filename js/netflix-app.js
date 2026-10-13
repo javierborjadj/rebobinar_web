@@ -482,10 +482,10 @@ const App = {
     const currentYear = today.getFullYear();
     const endOfYear = new Date(currentYear, 11, 31);
 
-    let params = { sort_by: 'popularity.desc' };
+    let params = { sort_by: 'popularity.desc', watch_region: this.region };
     if (subTab === 'cartelera') {
       const past = new Date();
-      past.setDate(today.getDate() - 45);
+      past.setDate(today.getDate() - 60);
       params['primary_release_date.gte'] = this.formatDate(past);
       params['primary_release_date.lte'] = this.formatDate(today);
       params.with_release_type = '2|3';
@@ -495,11 +495,15 @@ const App = {
       params.with_release_type = '2|3';
     }
 
-    const [p1, p2] = await Promise.all([
-      this.fetchTMDB('/discover/movie', { ...params, page: 1 }),
-      this.fetchTMDB('/discover/movie', { ...params, page: 2 })
-    ]);
-    const items = [...(p1?.results || []), ...(p2?.results || [])].map(x => ({ ...x, media_type: 'movie' }));
+    let data = await this.fetchTMDB('/discover/movie', params);
+    let items = (data?.results || []).map(x => ({ ...x, media_type: 'movie' }));
+    if (items.length === 0) {
+      // Respaldo por si el filtro estricto de región no arroja resultados inmediatos
+      delete params.watch_region;
+      delete params.with_release_type;
+      data = await this.fetchTMDB('/movie/now_playing', params);
+      items = (data?.results || []).map(x => ({ ...x, media_type: 'movie' }));
+    }
 
     const container = document.getElementById('catalogContainer');
     container.innerHTML = `
@@ -530,11 +534,12 @@ const App = {
       [dateLte]: this.formatDate(future)
     };
 
-    const [p1, p2] = await Promise.all([
-      this.fetchTMDB(endpoint, { ...params, page: 1 }),
-      this.fetchTMDB(endpoint, { ...params, page: 2 })
-    ]);
-    const items = [...(p1?.results || []), ...(p2?.results || [])].map(x => ({ ...x, media_type: mediaType }));
+    let data = await this.fetchTMDB(endpoint, params);
+    let items = (data?.results || []).map(x => ({ ...x, media_type: mediaType }));
+    if (items.length === 0 && !isTV) {
+      data = await this.fetchTMDB('/movie/upcoming', {});
+      items = (data?.results || []).map(x => ({ ...x, media_type: 'movie' }));
+    }
 
     const container = document.getElementById('catalogContainer');
     container.innerHTML = `
@@ -987,4 +992,5 @@ const App = {
 };
 
 document.addEventListener('DOMContentLoaded', () => App.init());
+
 
